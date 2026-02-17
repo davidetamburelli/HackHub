@@ -1,0 +1,38 @@
+package model.valueobjs;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Embeddable
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Password {
+
+    private static final int MIN_LENGTH = 8;
+
+    @Column(name = "password", nullable = false)
+    private String value;
+
+    public Password(String candidate) {
+        if (candidate == null || candidate.trim().isBlank()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
+
+        if (candidate.length() < MIN_LENGTH) {
+            throw new IllegalArgumentException("Password must be atleast " + MIN_LENGTH + " characters long");
+        }
+
+        this.value = candidate;
+    }
+
+    @Override
+    public String toString() {
+        return "********";
+    }
+
+}
