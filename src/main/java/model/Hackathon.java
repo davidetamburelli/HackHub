@@ -9,8 +9,6 @@ import utils.DomainException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Entity
 @Table(name = "hackathons")
@@ -27,6 +25,15 @@ public class Hackathon {
 
     @Column(nullable = false, length = 40)
     private String type;
+
+    @Column(name = "is_online", nullable = false)
+    private boolean isOnline;
+
+    @Column(length = 150)
+    private String location;
+
+    @Column(length = 100)
+    private String delivery;
 
     @Column(nullable = false)
     private double prize;
@@ -102,7 +109,7 @@ public class Hackathon {
         this.judge = judge;
         this.rankingPolicy = rankingPolicy;
 
-        // default sensato (poi puoi gestirlo con State pattern)
+        // default sensato (poi è gestibile con State pattern)
         this.status = HackathonStatus.CREATED;
     }
 

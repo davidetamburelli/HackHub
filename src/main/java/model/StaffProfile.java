@@ -21,10 +21,10 @@ public class StaffProfile {
     @AttributeOverride(name = "value", column = @Column(name = "email", unique = true))
     private Email email;
 
-    @Embedded
+    @Column(nullable = false)
     private String name;
 
-    @Embedded
+    @Column(nullable = false)
     private String surname;
 
     public StaffProfile(Email email, String name, String surname) {
