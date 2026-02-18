@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import model.Submission;
+import java.util.List;
 
 public class SubmissionRepository extends AbstractRepository<Submission> {
 
@@ -32,5 +33,14 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
                 .getSingleResult();
 
         return count > 0;
+    }
+
+    public List<Submission> findByHackathonId(Long hackathonId) {
+        String jpql = "SELECT s FROM Submission s WHERE s.hackathon.id = :hackathonId";
+
+        TypedQuery<Submission> query = em.createQuery(jpql, Submission.class);
+        query.setParameter("hackathonId", hackathonId);
+
+        return query.getResultList();
     }
 }
