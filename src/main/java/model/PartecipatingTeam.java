@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import utils.DomainException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,9 +36,29 @@ public class PartecipatingTeam {
     @JoinColumn(name = "hackathon_id", nullable = false)
     private Hackathon hackathon;
 
-
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "pt_active_members",
+            joinColumns = @JoinColumn(name = "partecipating_team_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_pt_active_member",
+                    columnNames = {"partecipating_team_id", "user_id"}
+            )
+    )
     private List<User> activeMembers = new ArrayList<User>();
 
     @Column(name = "registered_at", nullable = false)
     private LocalDateTime registeredAt;
+
+    private boolean isActiveMember(Long userId) {
+        return userId != null && activeMembers.stream().anyMatch(u -> u.getId().equals(userId));
+    }
+
+    public void assertActiveMember(Long userId) {
+        if (!isActiveMember(userId)) {
+            throw new DomainException("Utente non autorizzato: non è tra gli activeMembers");
+        }
+    }
+
 }

@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import utils.DomainException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,14 +42,10 @@ public class Team {
         return members.size();
     }
 
-    public boolean hasMember(User user) {
-        if (user == null) return false;
-        return members.contains(user);
-    }
-
-    public boolean isLeader(User user) {
-        if (this.leader == null || user == null) return false;
-        return this.leader.equals(user);
+    public void assertLeader(User user) {
+        if (this.leader == null || user == null) {
+            throw new DomainException("Operazione non autorizzata: l'utente non è il leader del team");
+        }
     }
 
     public void addMember(User user) {
