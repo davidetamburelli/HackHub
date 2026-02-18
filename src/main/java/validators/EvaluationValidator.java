@@ -25,33 +25,27 @@ public class EvaluationValidator {
         this.submissionRepository = submissionRepository;
     }
 
-    public void validate(AddEvaluationDTO dto) {
+    public void validate(AddEvaluationDTO dto, Long staffId, Long submissionId) {
         if (dto == null) throw new IllegalArgumentException("DTO nullo");
+        if (staffId == null || submissionId == null) throw new IllegalArgumentException("ID mancanti");
 
-        if (dto.getStaffProfileId() == null || dto.getHackathonId() == null || dto.getSubmissionId() == null) {
-            throw new IllegalArgumentException("ID Staff, Hackathon e Submission sono obbligatori");
-        }
-        if (dto.getScore() < 0 || dto.getScore() > 10) {
-            throw new IllegalArgumentException("Il punteggio deve essere compreso tra 0 e 10");
-        }
+        if (dto.getScore() < 0 || dto.getScore() > 10)
+            throw new IllegalArgumentException("Score non valido (0-10)");
 
-        Hackathon hackathon = hackathonRepository.getById(dto.getHackathonId());
-        if (hackathon == null) throw new DomainException("Hackathon non trovato");
-
-        StaffProfile staff = staffProfileRepository.getById(dto.getStaffProfileId());
-        if (staff == null) throw new DomainException("Profilo staff non trovato");
-
-        Submission submission = submissionRepository.getById(dto.getSubmissionId());
+        Submission submission = submissionRepository.getById(submissionId);
         if (submission == null) throw new DomainException("Submission non trovata");
 
+        Hackathon hackathon = submission.getHackathon();
+
+        StaffProfile staff = staffProfileRepository.getById(staffId);
+        if (staff == null) throw new DomainException("Giudice non trovato");
+
         submission.assertBelongsToHackathon(hackathon);
-
         hackathon.isInEvaluation();
-
         hackathon.assertIsJudge(staff);
 
         if (submission.getEvaluation() != null) {
-            throw new DomainException("Questa sottomissione è già stata valutata.");
+            throw new DomainException("Già valutata");
         }
     }
 }

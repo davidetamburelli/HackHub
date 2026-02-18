@@ -15,28 +15,23 @@ public class TeamValidator {
         this.userRepository = userRepository;
     }
 
-    public void validate(CreateTeamDTO dto) {
-        if (dto == null) {
-            throw new IllegalArgumentException("Il DTO non può essere nullo");
-        }
+    public void validate(CreateTeamDTO dto, Long userId) {
+        if (dto == null) throw new IllegalArgumentException("Il DTO non può essere nullo");
+        if (userId == null) throw new IllegalArgumentException("L'ID utente è obbligatorio");
 
         if (dto.getName() == null || dto.getName().trim().isBlank()) {
             throw new IllegalArgumentException("Il nome del team è obbligatorio");
         }
 
-        if (dto.getUserId() == null) {
-            throw new IllegalArgumentException("L'ID dell'utente leader è obbligatorio");
-        }
-
-        if (userRepository.getById(dto.getUserId()) == null) {
-            throw new DomainException("Utente leader non trovato con ID: " + dto.getUserId());
+        if (userRepository.getById(userId) == null) {
+            throw new DomainException("Utente leader non trovato con ID: " + userId);
         }
 
         if (teamRepository.existsByName(dto.getName())) {
             throw new DomainException("Esiste già un team con il nome: " + dto.getName());
         }
 
-        if (teamRepository.existsByMemberId(dto.getUserId())) {
+        if (teamRepository.existsByMemberId(userId)) {
             throw new DomainException("L'utente è già membro di un team e non può crearne uno nuovo.");
         }
     }

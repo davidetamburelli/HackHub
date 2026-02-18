@@ -11,7 +11,4 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RegisterTeamToHackathonDTO {
 
-    private Long userId;
-    private Long hackathonId;
-
 }

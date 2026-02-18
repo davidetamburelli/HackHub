@@ -11,9 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AddEvaluationDTO {
 
-    private Long staffProfileId;
-    private Long hackathonId;
-    private Long submissionId;
     private int score;
     private String comment;
 

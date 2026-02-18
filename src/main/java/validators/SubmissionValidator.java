@@ -30,41 +30,31 @@ public class SubmissionValidator {
         this.submissionRepository = submissionRepository;
     }
 
-    public void validate(AddSubmissionDTO dto) {
+    public void validate(AddSubmissionDTO dto, Long userId, Long hackathonId) {
         if (dto == null) throw new IllegalArgumentException("DTO nullo");
+        if (userId == null || hackathonId == null) throw new IllegalArgumentException("ID mancanti");
 
-        if (dto.getUserId() == null || dto.getHackathonId() == null) {
-            throw new IllegalArgumentException("ID Utente e Hackathon sono obbligatori");
-        }
-        if (dto.getResponse() == null || dto.getResponse().isBlank()) {
-            throw new IllegalArgumentException("Il testo della risposta è obbligatorio");
-        }
-        if (dto.getResponseURL() == null || dto.getResponseURL().isBlank()) {
-            throw new IllegalArgumentException("L'URL del progetto (es. GitHub) è obbligatorio");
-        }
+        if (dto.getResponse() == null || dto.getResponse().isBlank())
+            throw new IllegalArgumentException("Testo risposta mancante");
 
-        Hackathon hackathon = hackathonRepository.getById(dto.getHackathonId());
+        Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) throw new DomainException("Hackathon non trovato");
-
-        User user = userRepository.getById(dto.getUserId());
-        if (user == null) throw new DomainException("Utente non trovato");
 
         hackathon.assertRunning();
 
+        User user = userRepository.getById(userId);
+        if (user == null) throw new DomainException("Utente non trovato");
+
         Team team = teamRepository.findByMemberId(user.getId());
-        if (team == null) {
-            throw new DomainException("L'utente non fa parte di alcun team.");
-        }
+        if (team == null) throw new DomainException("L'utente non ha un team");
 
         team.assertLeader(user);
 
         ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathon.getId(), team.getId());
-        if (pt == null) {
-            throw new DomainException("Il team non è iscritto a questo hackathon.");
-        }
+        if (pt == null) throw new DomainException("Team non iscritto all'hackathon");
 
         if (submissionRepository.existsByParticipatingTeamId(pt.getId())) {
-            throw new DomainException("Il team ha già inviato una soluzione per questo hackathon.");
+            throw new DomainException("Soluzione già inviata");
         }
     }
 }

@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateHackathonDTO {
 
-    private Long staffProfileId;
     private String name;
     private String type;
     private String regulation;

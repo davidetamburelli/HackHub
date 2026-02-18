@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateTeamDTO {
 
-    private Long userId;
     private String name;
 
 }

@@ -11,8 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AddSubmissionDTO {
 
-    private Long userId;
-    private Long hackathonId;
     private String response;
     private String responseURL;
 
