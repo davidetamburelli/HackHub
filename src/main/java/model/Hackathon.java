@@ -84,7 +84,7 @@ public class Hackathon {
     private RankingPolicy rankingPolicy;
 
     @OneToMany(mappedBy = "hackathon", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PartecipatingTeam> partecipatingTeams = new ArrayList<>();
+    private List<ParticipatingTeam> partecipatingTeams = new ArrayList<>();
 
     public Hackathon(
             String name,
@@ -143,7 +143,7 @@ public class Hackathon {
         }
     }
 
-    public void addParticipatingTeam(PartecipatingTeam pt) {
+    public void addParticipatingTeam(ParticipatingTeam pt) {
         partecipatingTeams.add(pt);
     }
 
