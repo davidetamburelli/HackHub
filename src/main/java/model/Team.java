@@ -21,7 +21,7 @@ public class Team {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
+    @Column(nullable = false)
     private String name;
 
     @OneToOne(fetch = FetchType.LAZY)

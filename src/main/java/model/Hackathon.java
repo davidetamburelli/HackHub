@@ -131,7 +131,7 @@ public class Hackathon {
     }
 
     public void assertTeamSizeAllowed(int teamSize) {
-        if(teamSize > 0 && teamSize <= maxTeamSize) {
+        if(teamSize <= 0 || teamSize > maxTeamSize) {
             throw new DomainException("Iscrizione non autorizzata: il numero di membri del team non è valido");
         }
     }
