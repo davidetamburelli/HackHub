@@ -5,9 +5,12 @@ import lombok.*;
 import model.enums.HackathonStatus;
 import model.enums.RankingPolicy;
 import model.valueobjs.Period;
+import utils.DomainException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "hackathons")
@@ -58,6 +61,11 @@ public class Hackathon {
     private StaffProfile judge;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "hackathon_mentors",
+            joinColumns = @JoinColumn(name = "hackathon_id"),
+            inverseJoinColumns = @JoinColumn(name = "mentor_id")
+    )
     private List<StaffProfile> mentors = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -98,8 +106,42 @@ public class Hackathon {
         this.status = HackathonStatus.CREATED;
     }
 
+    public void assertRunning() {
+        if (!isInStatus(HackathonStatus.RUNNING)) {
+            throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di svolgimento");
+        }
+    }
+
+    public void isInRegistration() {
+        if (!isInStatus(HackathonStatus.IN_REGISTRATION)) {
+            throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di registrazione");
+        }
+    }
+
+    public void isInEvaluation() {
+        if (!isInStatus(HackathonStatus.IN_EVALUATION)) {
+            throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di valutazione");
+        }
+    }
+
+    public void assertIsJudge(StaffProfile staff) {
+        if (staff == null || !staff.equals(judge)) {
+            throw new DomainException("Staff profile non autorizzato: non è il giudice dell'hackathon");
+        }
+    }
+
+    public void assertTeamSizeAllowed(int teamSize) {
+        if(teamSize > 0 && teamSize <= maxTeamSize) {
+            throw new DomainException("Iscrizione non autorizzata: il numero di membri del team non è valido");
+        }
+    }
+
     public void addParticipatingTeam(PartecipatingTeam pt) {
         partecipatingTeams.add(pt);
+    }
+
+    private boolean isInStatus(HackathonStatus hackathonStatus) {
+        return status.equals(hackathonStatus);
     }
 
 }
