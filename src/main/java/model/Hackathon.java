@@ -13,7 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "hackathons")
 @Getter
-@ToString(exclude = {"organizer", "judge", "mentors", "partecipatingTeams"})
+@ToString(exclude = {"organizer", "judge", "mentors", "participatingTeams"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hackathon {
     @Id
@@ -25,9 +25,6 @@ public class Hackathon {
 
     @Column(nullable = false, length = 40)
     private String type;
-
-    @Column(name = "is_online", nullable = false)
-    private boolean isOnline;
 
     @Column(length = 150)
     private String location;
@@ -57,7 +54,7 @@ public class Hackathon {
             @AttributeOverride(name = "startAt", column = @Column(name = "hackathon_start_at", nullable = false)),
             @AttributeOverride(name = "endAt", column = @Column(name = "hackathon_end_at", nullable = false))
     })
-    private Period hackathonDates;
+    private Period dates; // Rinominato da hackathonDates
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organizer_id", nullable = false)
@@ -84,7 +81,7 @@ public class Hackathon {
     private RankingPolicy rankingPolicy;
 
     @OneToMany(mappedBy = "hackathon", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ParticipatingTeam> partecipatingTeams = new ArrayList<>();
+    private List<ParticipatingTeam> participatingTeams = new ArrayList<>();
 
     public Hackathon(
             String name,
@@ -92,63 +89,83 @@ public class Hackathon {
             double prize,
             int maxTeamSize,
             String regulation,
-            Period subscriptionDates,
-            Period hackathonDates,
             StaffProfile organizer,
             StaffProfile judge,
-            RankingPolicy rankingPolicy
+            List<StaffProfile> mentors,
+            String delivery,
+            String location,
+            RankingPolicy rankingPolicy,
+            Period subscriptionDates,
+            Period dates
     ) {
         this.name = name;
         this.type = type;
         this.prize = prize;
         this.maxTeamSize = maxTeamSize;
         this.regulation = regulation;
-        this.subscriptionDates = subscriptionDates;
-        this.hackathonDates = hackathonDates;
         this.organizer = organizer;
         this.judge = judge;
+        this.mentors = mentors != null ? mentors : new ArrayList<>();
+        this.delivery = delivery;
+        this.location = location;
         this.rankingPolicy = rankingPolicy;
+        this.subscriptionDates = subscriptionDates;
+        this.dates = dates;
 
-        // default sensato (poi è gestibile con State pattern)
         this.status = HackathonStatus.CREATED;
     }
 
-    public void assertRunning() {
-        if (!isInStatus(HackathonStatus.RUNNING)) {
-            throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di svolgimento");
+    public void addParticipatingTeam(ParticipatingTeam pt) {
+        if (pt != null) {
+            this.participatingTeams.add(pt);
         }
     }
 
-    public void isInRegistration() {
-        if (!isInStatus(HackathonStatus.IN_REGISTRATION)) {
+    public void assertInRegistration() {
+        if (!status.equals(HackathonStatus.IN_REGISTRATION)) {
             throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di registrazione");
         }
     }
 
-    public void isInEvaluation() {
-        if (!isInStatus(HackathonStatus.IN_EVALUATION)) {
+    public void assertRunning() {
+        if (!status.equals(HackathonStatus.RUNNING)) {
+            throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di svolgimento");
+        }
+    }
+
+    public void assertInEvaluation() {
+        if (!status.equals(HackathonStatus.IN_EVALUATION)) {
             throw new DomainException("Operazione non autorizzata: l'hackathon non è in fase di valutazione");
         }
     }
 
-    public void assertIsJudge(StaffProfile staff) {
-        if (staff == null || !staff.equals(judge)) {
+    public void assertStaff(StaffProfile staff) {
+        if (staff == null) throw new IllegalArgumentException("Staff profile nullo");
+
+        boolean isOrganizer = staff.equals(this.organizer);
+        boolean isJudge = staff.equals(this.judge);
+        boolean isMentor = this.mentors.contains(staff);
+
+        if (!isOrganizer && !isJudge && !isMentor) {
+            throw new DomainException("L'utente non fa parte dello staff di questo hackathon");
+        }
+    }
+
+    public void assertJudge(StaffProfile staff) {
+        if (staff == null || !staff.equals(this.judge)) {
             throw new DomainException("Staff profile non autorizzato: non è il giudice dell'hackathon");
+        }
+    }
+
+    public void assertMentor(StaffProfile staff) {
+        if (staff == null || !this.mentors.contains(staff)) {
+            throw new DomainException("Staff profile non autorizzato: non è un mentor dell'hackathon");
         }
     }
 
     public void assertTeamSizeAllowed(int teamSize) {
         if(teamSize <= 0 || teamSize > maxTeamSize) {
-            throw new DomainException("Iscrizione non autorizzata: il numero di membri del team non è valido");
+            throw new DomainException("Iscrizione non autorizzata: il numero di membri del team non è valido (" + teamSize + "/" + maxTeamSize + ")");
         }
     }
-
-    public void addParticipatingTeam(ParticipatingTeam pt) {
-        partecipatingTeams.add(pt);
-    }
-
-    private boolean isInStatus(HackathonStatus hackathonStatus) {
-        return status.equals(hackathonStatus);
-    }
-
 }

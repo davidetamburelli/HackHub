@@ -19,7 +19,7 @@ public class HackathonValidator {
     }
 
     public void validate(CreateHackathonDTO dto, Long organizerId) {
-        // 1. Validazione Input Base
+
         if (dto == null) throw new IllegalArgumentException("Il DTO non può essere nullo");
         if (organizerId == null) throw new IllegalArgumentException("L'ID dell'organizzatore è obbligatorio");
 

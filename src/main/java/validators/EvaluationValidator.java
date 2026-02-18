@@ -41,8 +41,8 @@ public class EvaluationValidator {
         if (staff == null) throw new DomainException("Giudice non trovato");
 
         submission.assertBelongsToHackathon(hackathon);
-        hackathon.isInEvaluation();
-        hackathon.assertIsJudge(staff);
+        hackathon.assertInEvaluation();
+        hackathon.assertJudge(staff);
 
         if (submission.getEvaluation() != null) {
             throw new DomainException("Già valutata");

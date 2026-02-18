@@ -37,7 +37,7 @@ public class RegisterTeamToHackathonValidator {
         User user = userRepository.getById(userId);
         if (user == null) throw new DomainException("Utente non trovato");
 
-        hackathon.isInRegistration();
+        hackathon.assertInRegistration();
 
         Team team = teamRepository.findByMemberId(user.getId());
         if (team == null) throw new DomainException("L'utente non ha un team");
