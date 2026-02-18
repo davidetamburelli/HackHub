@@ -13,7 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(
-        name = "partecipatingTeams",
+        name = "participatingTeams",
         uniqueConstraints = {
                 // Un team non può essere iscritto 2 volte allo stesso hackathon
                 @UniqueConstraint(name = "uk_part_team_hackathon", columnNames = {"team_id", "hackathon_id"})
@@ -22,7 +22,7 @@ import java.util.List;
 @Getter
 @ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PartecipatingTeam {
+public class ParticipatingTeam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -39,11 +39,11 @@ public class PartecipatingTeam {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "pt_active_members",
-            joinColumns = @JoinColumn(name = "partecipating_team_id"),
+            joinColumns = @JoinColumn(name = "participating_team_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"),
             uniqueConstraints = @UniqueConstraint(
                     name = "uk_pt_active_member",
-                    columnNames = {"partecipating_team_id", "user_id"}
+                    columnNames = {"participating_team_id", "user_id"}
             )
     )
     private List<User> activeMembers = new ArrayList<User>();

@@ -10,9 +10,9 @@ import utils.DomainException;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "hackathons")
+@Table(name = "submissions")
 @Getter
-@ToString(exclude = {"organizer", "judge", "mentors", "partecipatingTeams"})
+@ToString(exclude = {"hackathon", "participatingTeams", "evaluation"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Submission {
     @Id
@@ -27,7 +27,7 @@ public class Submission {
     )
     private Hackathon hackathon;
 
-    // --------- RELAZIONE CON PARTECIPATING TEAM ---------
+    // --------- RELAZIONE CON PARTICIPATING TEAM ---------
     // Una submission per team partecipante
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -36,7 +36,7 @@ public class Submission {
             unique = true,
             foreignKey = @ForeignKey(name = "fk_submission_participating_team")
     )
-    private PartecipatingTeam partecipatingTeam;
+    private ParticipatingTeam participatingTeam;
     @Column(name = "response_text", nullable = false)
     private String responseText;
 
@@ -48,6 +48,17 @@ public class Submission {
 
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Evaluation evaluation;
+
+    public Submission(Hackathon hackathon, ParticipatingTeam team, String responseText, String responseUrl) {
+        if (hackathon == null || team == null) {
+            throw new IllegalArgumentException("Hackathon e Team sono obbligatori");
+        }
+        this.hackathon = hackathon;
+        this.participatingTeam = team;
+        this.responseText = responseText;
+        this.responseUrl = responseUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     public Evaluation addEvaluation(Long judgeId, int score, String comment) {
         if (this.evaluation != null) {
@@ -68,4 +79,5 @@ public class Submission {
             throw new IllegalStateException("Non ancora valutata");
         return evaluation.getScore();
     }
+
 }
