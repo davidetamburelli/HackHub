@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
-import utils.DomainException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +11,6 @@ import java.util.List;
 @Entity
 @Table(name = "teams")
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Team {
 
@@ -24,46 +21,30 @@ public class Team {
     @Column(nullable = false)
     private String name;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "leader_id")
-    private User leader;
+    @Column(name = "leader_id", nullable = false)
+    private Long leader;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", referencedColumnName = "id", insertable = false, updatable = false)
-    @ToString.Exclude 
-    private List<User> members = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "team_members",
+            joinColumns = @JoinColumn(name = "team_id")
+    )
+    @Column(name = "user_id", nullable = false)
+    private List<Long> members = new ArrayList<>();
 
-    public Team(String name, User leader) {
-        if (name == null || name.trim().isBlank()) {
-            throw new IllegalArgumentException("Il nome del team è obbligatorio");
-        }
-        if (leader == null) {
-            throw new IllegalArgumentException("Il leader è obbligatorio per creare un team");
-        }
+    public Team(String name, Long leaderId) {
         this.name = name;
-        this.leader = leader;
+        this.leader = leaderId;
+        this.members.add(leaderId);
     }
 
-    public int getTeamSize() {
-        return members.size();
-    }
-
-    public void assertLeader(User user) {
-        if (this.leader == null || user == null || !this.leader.getId().equals(user.getId())) {
-            throw new DomainException("Operazione non autorizzata: l'utente non è il leader del team");
+    public void addMember(Long userId) {
+        if (userId != null && !this.members.contains(userId)) {
+            this.members.add(userId);
         }
     }
 
-    public void addMember(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("Non puoi aggiungere un utente nullo.");
-        }
-
-        if (this.members.contains(user)) {
-            return;
-        }
-        user.assignTeam(this.id);
-        this.members.add(user);
+    public List<Long> getMemberIdsSnapshot() {
+        return new ArrayList<>(this.members);
     }
-    
 }
