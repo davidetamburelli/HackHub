@@ -4,6 +4,7 @@ import model.Hackathon;
 import model.StaffProfile;
 import model.Submission;
 import model.dto.AddEvaluationDTO;
+import model.enums.HackathonStatus;
 import repository.HackathonRepository;
 import repository.StaffProfileRepository;
 import repository.SubmissionRepository;
@@ -29,23 +30,36 @@ public class EvaluationValidator {
         if (dto == null) throw new IllegalArgumentException("DTO nullo");
         if (staffId == null || submissionId == null) throw new IllegalArgumentException("ID mancanti");
 
-        if (dto.getScore() < 0 || dto.getScore() > 10)
+        if (dto.getScore() < 0 || dto.getScore() > 10) {
             throw new IllegalArgumentException("Score non valido (0-10)");
+        }
 
         Submission submission = submissionRepository.getById(submissionId);
-        if (submission == null) throw new DomainException("Submission non trovata");
-
-        Hackathon hackathon = submission.getHackathon();
+        if (submission == null) {
+            throw new DomainException("Submission non trovata");
+        }
 
         StaffProfile staff = staffProfileRepository.getById(staffId);
-        if (staff == null) throw new DomainException("Giudice non trovato");
+        if (staff == null) {
+            throw new DomainException("Profilo staff non trovato");
+        }
 
-        submission.assertBelongsToHackathon(hackathon);
-        hackathon.assertInEvaluation();
-        hackathon.assertJudge(staff);
+        Long hackathonId = submission.getHackathon();
+        Hackathon hackathon = hackathonRepository.getById(hackathonId);
+        if (hackathon == null) {
+            throw new DomainException("L'hackathon associato a questa submission non esiste più");
+        }
 
-        if (submission.getEvaluation() != null) {
-            throw new DomainException("Già valutata");
+        if (hackathon.getStatus() != HackathonStatus.IN_EVALUATION) {
+            throw new DomainException("L'hackathon non è attualmente in fase di valutazione");
+        }
+
+        if (!hackathon.getJudge().equals(staffId)) {
+            throw new DomainException("Operazione non autorizzata: l'utente non è il giudice di questo hackathon");
+        }
+
+        if (submission.hasEvaluation()) {
+            throw new DomainException("La submission è già stata valutata");
         }
     }
 }
