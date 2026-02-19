@@ -1,5 +1,7 @@
 package handlers;
 
+import builders.HackathonBuilder;
+import builders.IHackathonBuilder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import model.Hackathon;
@@ -35,7 +37,7 @@ public class HackathonHandler {
         this.hackathonValidator = new HackathonValidator(hackathonRepository, staffProfileRepository);
     }
 
-    public Hackathon createHackathon(Long staffProfileId, CreateHackathonDTO dto) {
+    public void createHackathon(Long staffProfileId, CreateHackathonDTO dto) {
         EntityTransaction tx = em.getTransaction();
 
         try {
@@ -60,29 +62,33 @@ public class HackathonHandler {
                 }
             }
 
-            Hackathon hackathon = new Hackathon(
-                    dto.getName(),
-                    dto.getType(),
-                    dto.getPrize(),
-                    dto.getMaxTeamSize(),
-                    dto.getRegulation(),
-                    organizer,
-                    judge,
-                    mentors,
-                    dto.getDelivery(),
-                    dto.getLocation(),
-                    dto.getRankingPolicy(),
-                    dto.getSubscriptionDates(),
-                    dto.getDates()
-            );
+            IHackathonBuilder builder = new HackathonBuilder();
+
+            Hackathon hackathon = builder
+                    .buildName(dto.getName())
+                    .buildType(dto.getType())
+                    .buildPrize(dto.getPrize())
+                    .buildMaxTeamSize(dto.getMaxTeamSize())
+                    .buildRegulation(dto.getRegulation())
+                    .buildDelivery(dto.getDelivery())
+                    .buildLocation(dto.getLocation())
+                    .buildRankingPolicy(dto.getRankingPolicy())
+                    .buildSubscriptionDates(dto.getSubscriptionDates())
+                    .buildDates(dto.getDates())
+                    .buildOrganizer(organizer)
+                    .buildJudge(judge)
+                    .buildMentors(mentors)
+                    .build();
 
             hackathonRepository.save(hackathon);
 
             tx.commit();
-            return hackathon;
+            System.out.println("Hackathon creato con successo: " + hackathon.getName());
 
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive()) {
+                tx.rollback();
+            }
             throw e;
         }
     }
