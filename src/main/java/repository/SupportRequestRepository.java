@@ -1,6 +1,7 @@
 package repository;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import model.SupportRequest;
 
@@ -19,5 +20,20 @@ public class SupportRequestRepository extends AbstractRepository<SupportRequest>
         query.setParameter("hackathonId", hackathonId);
 
         return query.getResultList();
+    }
+
+    public SupportRequest getByIdAndHackathonId(Long supportRequestId, Long hackathonId) {
+        try {
+            String jpql = "SELECT s FROM SupportRequest s " +
+                    "WHERE s.id = :supportRequestId AND s.hackathon.id = :hackathonId";
+
+            TypedQuery<SupportRequest> query = em.createQuery(jpql, SupportRequest.class);
+            query.setParameter("supportRequestId", supportRequestId);
+            query.setParameter("hackathonId", hackathonId);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 }

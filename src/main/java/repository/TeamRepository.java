@@ -38,4 +38,16 @@ public class TeamRepository extends AbstractRepository<Team> {
             return null;
         }
     }
+
+    public Team findByLeaderId(Long userId) {
+        try {
+            String jpql = "SELECT t FROM Team t WHERE t.leader.id = :userId";
+            TypedQuery<Team> query = em.createQuery(jpql, Team.class);
+            query.setParameter("userId", userId);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
 }

@@ -12,24 +12,6 @@ public class InvitationRepository extends AbstractRepository<Invitation> {
         super(em, Invitation.class);
     }
 
-    public Invitation findPendingByTeamIdAndInviteeId(Long teamId, Long inviteeId) {
-        try {
-            String jpql = "SELECT i FROM Invitation i " +
-                    "WHERE i.team.id = :teamId " +
-                    "AND i.invitee.id = :inviteeId " +
-                    "AND i.status = :status";
-
-            TypedQuery<Invitation> query = em.createQuery(jpql, Invitation.class);
-            query.setParameter("teamId", teamId);
-            query.setParameter("inviteeId", inviteeId);
-            query.setParameter("status", InvitationStatus.PENDING);
-
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
-
     public boolean existsPendingByTeamIdAndInviteeId(Long teamId, Long inviteeId) {
         String jpql = "SELECT COUNT(i) FROM Invitation i " +
                 "WHERE i.team.id = :teamId " +
@@ -43,5 +25,23 @@ public class InvitationRepository extends AbstractRepository<Invitation> {
                 .getSingleResult();
 
         return count > 0;
+    }
+
+    public Invitation findByIdAndInviteeIdAndStatus(Long invitationId, Long userId, InvitationStatus status) {
+        try {
+            String jpql = "SELECT i FROM Invitation i " +
+                    "WHERE i.id = :invitationId " +
+                    "AND i.invitee.id = :userId " +
+                    "AND i.status = :status";
+
+            TypedQuery<Invitation> query = em.createQuery(jpql, Invitation.class);
+            query.setParameter("invitationId", invitationId);
+            query.setParameter("userId", userId);
+            query.setParameter("status", status);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 }

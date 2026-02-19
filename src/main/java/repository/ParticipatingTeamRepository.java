@@ -8,9 +8,7 @@ import model.ParticipatingTeam;
 public class ParticipatingTeamRepository extends AbstractRepository<ParticipatingTeam> {
 
     public ParticipatingTeamRepository(EntityManager em) {
-
         super(em, ParticipatingTeam.class);
-
     }
 
     public boolean existsByHackathonIdAndTeamId(Long hackathonId, Long teamId) {
@@ -33,6 +31,37 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
             TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
             query.setParameter("hackathonId", hackathonId);
             query.setParameter("teamId", teamId);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    public ParticipatingTeam getByIdAndHackathonId(Long participatingTeamId, Long hackathonId) {
+        try {
+            String jpql = "SELECT pt FROM ParticipatingTeam pt " +
+                    "WHERE pt.id = :ptId AND pt.hackathon.id = :hackathonId";
+
+            TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
+            query.setParameter("ptId", participatingTeamId);
+            query.setParameter("hackathonId", hackathonId);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    public ParticipatingTeam findByHackathonIdAndActiveMemberId(Long hackathonId, Long userId) {
+        try {
+            String jpql = "SELECT pt FROM ParticipatingTeam pt " +
+                    "JOIN pt.team t JOIN t.members m " +
+                    "WHERE pt.hackathon.id = :hackathonId AND m.id = :userId";
+
+            TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
+            query.setParameter("hackathonId", hackathonId);
+            query.setParameter("userId", userId);
 
             return query.getSingleResult();
         } catch (NoResultException e) {

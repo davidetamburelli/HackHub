@@ -43,4 +43,19 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
 
         return query.getResultList();
     }
+
+    public Submission getByIdAndHackathonId(Long submissionId, Long hackathonId) {
+        try {
+            String jpql = "SELECT s FROM Submission s " +
+                    "WHERE s.id = :submissionId AND s.hackathon.id = :hackathonId";
+
+            TypedQuery<Submission> query = em.createQuery(jpql, Submission.class);
+            query.setParameter("submissionId", submissionId);
+            query.setParameter("hackathonId", hackathonId);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
 }
