@@ -15,7 +15,6 @@ import java.util.List;
 @Table(
         name = "participatingTeams",
         uniqueConstraints = {
-                // Un team non può essere iscritto 2 volte allo stesso hackathon
                 @UniqueConstraint(name = "uk_part_team_hackathon", columnNames = {"team_id", "hackathon_id"})
         }
 )
@@ -27,7 +26,6 @@ public class ParticipatingTeam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Iscrizione di un Team a un Hackathon: tanti participatingTeam possono riferirsi allo stesso Team in hackathon diversi
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
@@ -53,6 +51,15 @@ public class ParticipatingTeam {
 
     private boolean isActiveMember(Long userId) {
         return userId != null && activeMembers.stream().anyMatch(u -> u.getId().equals(userId));
+    }
+
+    public ParticipatingTeam(Hackathon hackathon, Team team) {
+        if (hackathon == null || team == null) {
+            throw new IllegalArgumentException("Hackathon e Team sono obbligatori");
+        }
+        this.hackathon = hackathon;
+        this.team = team;
+        this.registeredAt = LocalDateTime.now();
     }
 
     public void assertActiveMember(Long userId) {

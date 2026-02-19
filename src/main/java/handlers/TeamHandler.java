@@ -36,9 +36,11 @@ public class TeamHandler {
 
             Team team = new Team(dto.getName(), leader);
 
+            teamRepository.save(team);
+
             team.addMember(leader);
 
-            teamRepository.save(team);
+            userRepository.save(leader);
 
             tx.commit();
             System.out.println("Team creato con successo: " + team.getName());

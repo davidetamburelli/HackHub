@@ -34,6 +34,12 @@ public class Team {
     private List<User> members = new ArrayList<>();
 
     public Team(String name, User leader) {
+        if (name == null || name.trim().isBlank()) {
+            throw new IllegalArgumentException("Il nome del team è obbligatorio");
+        }
+        if (leader == null) {
+            throw new IllegalArgumentException("Il leader è obbligatorio per creare un team");
+        }
         this.name = name;
         this.leader = leader;
     }
@@ -43,7 +49,7 @@ public class Team {
     }
 
     public void assertLeader(User user) {
-        if (this.leader == null || user == null) {
+        if (this.leader == null || user == null || !this.leader.getId().equals(user.getId())) {
             throw new DomainException("Operazione non autorizzata: l'utente non è il leader del team");
         }
     }
