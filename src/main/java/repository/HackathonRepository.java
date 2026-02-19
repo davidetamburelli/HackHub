@@ -123,4 +123,9 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
 
         return count > 0;
     }
+
+    public List<Hackathon> findAll() {
+        String jpql = "SELECT h FROM Hackathon h";
+        return em.createQuery(jpql, Hackathon.class).getResultList();
+    }
 }

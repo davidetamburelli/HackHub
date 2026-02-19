@@ -1,19 +1,13 @@
 package model;
 
-import model.valueobjs.Email;
-import model.valueobjs.Password;
-import model.valueobjs.Username;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Table(name = "users")
 @Getter
-@ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
@@ -21,34 +15,25 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "Username", nullable = false, unique = true))
-    private Username username;
+    @Column(nullable = false, unique = true)
+    private String username;
 
-    @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "email", unique = true))
-    private Email email;
+    @Column(nullable = false)
+    private String name;
 
-    @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "password"))
-    private Password password;
+    @Column(nullable = false)
+    private String surname;
 
-    @Column(name = "team_id", nullable = true)
-    @Setter
-    private Long teamId;
+    @Column(name = "team_id")
+    private Long team;
 
-    public User(Username username, Email email, Password password) {
+    public User(String username, String name, String surname) {
         this.username = username;
-        this.email = email;
-        this.password = password;
-        this.teamId = null;
+        this.name = name;
+        this.surname = surname;
     }
 
     public void assignTeam(Long teamId) {
-        this.teamId = teamId;
-    }
-
-    public void leaveTeam() {
-        this.teamId = null;
+        this.team = teamId;
     }
 }
