@@ -9,8 +9,6 @@ import model.StaffProfile;
 import model.dto.CreateHackathonDTO;
 import repository.HackathonRepository;
 import repository.StaffProfileRepository;
-import repository.TeamRepository;
-import repository.UserRepository;
 import utils.DomainException;
 import validators.HackathonValidator;
 
@@ -23,8 +21,6 @@ public class HackathonHandler {
 
     private final StaffProfileRepository staffProfileRepository;
     private final HackathonRepository hackathonRepository;
-    private final UserRepository userRepository;
-    private final TeamRepository teamRepository;
 
     private final HackathonValidator hackathonValidator;
 
@@ -32,36 +28,42 @@ public class HackathonHandler {
         this.em = em;
         this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
-        this.userRepository = new UserRepository(em);
-        this.teamRepository = new TeamRepository(em);
-        this.hackathonValidator = new HackathonValidator(hackathonRepository, staffProfileRepository);
+        this.hackathonValidator = new HackathonValidator();
+
     }
 
     public void createHackathon(Long staffProfileId, CreateHackathonDTO dto) {
+        if (staffProfileId == null) throw new IllegalArgumentException("L'ID dell'organizzatore è obbligatorio");
+
         EntityTransaction tx = em.getTransaction();
 
         try {
             tx.begin();
 
-            hackathonValidator.validate(dto, staffProfileId);
+            hackathonValidator.validate(dto);
 
             StaffProfile organizer = staffProfileRepository.getById(staffProfileId);
             if (organizer == null) {
-                throw new DomainException("Organizzatore non trovato");
+                throw new DomainException("Organizzatore non trovato (ID: " + staffProfileId + ")");
+            }
+
+            if (hackathonRepository.existsByName(dto.getName())) {
+                throw new DomainException("Esiste già un hackathon con questo nome: " + dto.getName());
             }
 
             StaffProfile judge = staffProfileRepository.findByEmail(dto.getJudgeEmail());
             if (judge == null) {
-                throw new DomainException("Giudice non trovato per email: " + dto.getJudgeEmail());
+                throw new DomainException("Nessun profilo staff trovato per l'email del giudice: " + dto.getJudgeEmail());
             }
 
             List<Long> mentorIds = new ArrayList<>();
-            if (dto.getMentorEmails() != null) {
+            if (dto.getMentorEmails() != null && !dto.getMentorEmails().isEmpty()) {
                 for (String email : dto.getMentorEmails()) {
                     StaffProfile mentor = staffProfileRepository.findByEmail(email);
-                    if (mentor != null) {
-                        mentorIds.add(mentor.getId());
+                    if (mentor == null) {
+                        throw new DomainException("Nessun profilo staff trovato per il mentore: " + email);
                     }
+                    mentorIds.add(mentor.getId());
                 }
             }
 

@@ -3,26 +3,17 @@ package validators;
 import model.dto.CreateHackathonDTO;
 import model.dto.HackathonSearchCriteria;
 import model.valueobjs.Period;
-import repository.HackathonRepository;
-import repository.StaffProfileRepository;
 import utils.DomainException;
 
 import java.time.LocalDateTime;
 
 public class HackathonValidator {
 
-    private final HackathonRepository hackathonRepository;
-    private final StaffProfileRepository staffProfileRepository;
+    public HackathonValidator() {}
 
-    public HackathonValidator(HackathonRepository hackathonRepository, StaffProfileRepository staffProfileRepository) {
-        this.hackathonRepository = hackathonRepository;
-        this.staffProfileRepository = staffProfileRepository;
-    }
-
-    public void validate(CreateHackathonDTO dto, Long organizerId) {
+    public void validate(CreateHackathonDTO dto) {
 
         if (dto == null) throw new IllegalArgumentException("Il DTO non può essere nullo");
-        if (organizerId == null) throw new IllegalArgumentException("L'ID dell'organizzatore è obbligatorio");
 
         if (dto.getName() == null || dto.getName().trim().isBlank())
             throw new IllegalArgumentException("Il nome dell'hackathon è obbligatorio");
@@ -38,26 +29,6 @@ public class HackathonValidator {
 
         if (dto.getMaxTeamSize() <= 0)
             throw new IllegalArgumentException("La dimensione massima del team deve essere maggiore di zero");
-
-        if (hackathonRepository.existsByName(dto.getName())) {
-            throw new DomainException("Esiste già un hackathon con questo nome: " + dto.getName());
-        }
-
-        if (staffProfileRepository.getById(organizerId) == null) {
-            throw new DomainException("Organizzatore non trovato (ID: " + organizerId + ")");
-        }
-
-        if (staffProfileRepository.findByEmail(dto.getJudgeEmail()) == null) {
-            throw new DomainException("Nessun profilo staff trovato per l'email del giudice: " + dto.getJudgeEmail());
-        }
-
-        if (dto.getMentorEmails() != null && !dto.getMentorEmails().isEmpty()) {
-            for (String email : dto.getMentorEmails()) {
-                if (staffProfileRepository.findByEmail(email) == null) {
-                    throw new DomainException("Nessun profilo staff trovato per il mentore: " + email);
-                }
-            }
-        }
 
         validateDates(dto.getSubscriptionDates(), dto.getDates());
     }
