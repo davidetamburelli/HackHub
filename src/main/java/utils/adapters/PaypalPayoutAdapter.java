@@ -1,6 +1,6 @@
 package utils.adapters;
 
-import model.dto.PaymentResult;
+import model.dto.requestdto.PaymentResult;
 import model.enums.PayoutMethod;
 
 import java.util.UUID;

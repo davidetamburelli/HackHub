@@ -16,7 +16,6 @@ public class HackathonBuilder implements IHackathonBuilder {
     private int maxTeamSize;
     private String regulation;
 
-    // Sostituiti gli oggetti con i relativi ID numerici
     private Long organizerId;
     private Long judgeId;
     private List<Long> mentorsId;

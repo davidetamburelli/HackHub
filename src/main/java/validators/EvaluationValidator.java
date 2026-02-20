@@ -1,6 +1,6 @@
 package validators;
 
-import model.dto.AddEvaluationDTO;
+import model.dto.requestdto.AddEvaluationDTO;
 
 public class EvaluationValidator {
 

@@ -1,6 +1,6 @@
 package validators;
 
-import model.dto.CreateTeamDTO;
+import model.dto.requestdto.CreateTeamDTO;
 
 public class TeamValidator {
 

@@ -1,6 +1,6 @@
 package utils.adapters;
 
-import model.dto.CallBookingResult;
+import model.dto.requestdto.CallBookingResult;
 import utils.facade.CalendarEventSpec;
 
 public interface ICalendarAdapter {

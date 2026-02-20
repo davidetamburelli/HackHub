@@ -3,6 +3,7 @@ package repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
+import model.RankingCandidate;
 import model.Submission;
 import java.util.List;
 
@@ -82,6 +83,16 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    public List<RankingCandidate> getRankingCandidates(Long hackathonId) {
+        String jpql = "SELECT rc FROM RankingCandidate rc " +
+                "JOIN ParticipatingTeam pt ON rc.eligibleParticipatingTeam = pt.id " +
+                "WHERE pt.hackathon = :hackathonId AND pt.disqualified = false";
+
+        return em.createQuery(jpql, RankingCandidate.class)
+                .setParameter("hackathonId", hackathonId)
+                .getResultList();
     }
 
 }

@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import model.ParticipatingTeam;
 import model.Team;
-import model.dto.RegisterTeamDTO;
+import model.dto.requestdto.RegisterTeamDTO;
 import model.enums.HackathonStatus;
 import repository.HackathonRepository;
 import repository.ParticipatingTeamRepository;
@@ -18,11 +18,9 @@ import java.util.List;
 public class ParticipatingTeamHandler {
 
     private final EntityManager em;
-
     private final TeamRepository teamRepository;
     private final HackathonRepository hackathonRepository;
     private final ParticipatingTeamRepository participatingTeamRepository;
-
     private final ParticipatingTeamValidator validator;
 
     public ParticipatingTeamHandler(EntityManager em) {
@@ -30,58 +28,58 @@ public class ParticipatingTeamHandler {
         this.teamRepository = new TeamRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
-
         this.validator = new ParticipatingTeamValidator();
     }
 
-    public void registerTeamToHackathon(Long userId, Long hackathonId, RegisterTeamDTO dto) {
-
+    public void registerTeamToHackathon(Long userId, Long hackathonId, RegisterTeamDTO registerTeamDTO) {
         EntityTransaction tx = em.getTransaction();
 
         try {
             tx.begin();
 
-            validator.validate(dto);
+            validator.validate(registerTeamDTO);
 
             Team team = teamRepository.findByLeaderId(userId);
             if (team == null) {
-                throw new DomainException("Operazione non autorizzata: non sei il leader di nessun team.");
+                throw new DomainException("Utente non autorizzato: non sei il leader di alcun team");
             }
 
-            HackathonStatus hackathonStatus = hackathonRepository.findStatusById(hackathonId);
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
             if (hackathonStatus != HackathonStatus.IN_REGISTRATION) {
-                throw new DomainException("L'hackathon non è attualmente aperto alle iscrizioni");
+                throw new DomainException("Le iscrizioni per questo hackathon non sono aperte");
             }
 
             boolean isAlreadyRegistered = participatingTeamRepository.existsByHackathonIdAndTeamId(hackathonId, team.getId());
             if (isAlreadyRegistered) {
-                throw new DomainException("Team già iscritto a questo hackathon");
+                throw new DomainException("Il team è già iscritto a questo hackathon");
             }
 
-            int maxTeamSize = hackathonRepository.findMaxTeamSizeById(hackathonId);
-
+            int maxTeamSize = hackathonRepository.findMaxTeamSizeByHackathonId(hackathonId);
             int teamSize = team.getTeamSize();
+
             if (teamSize > maxTeamSize || teamSize < 1) {
-                throw new DomainException("Il numero dei membri del team (" + teamSize + ") non è valido o supera il limite massimo consentito (" + maxTeamSize + ")");
+                throw new DomainException("La dimensione del team non rispetta i limiti dell'hackathon");
             }
 
-            List<Long> memberIdsSnapshot = team.getMemberIdsSnapshot();
+            List<Long> membersSnapshot = team.getMemberIdsSnapshot();
 
-            ParticipatingTeam pt = new ParticipatingTeam(
+            ParticipatingTeam participatingTeam = new ParticipatingTeam(
                     hackathonId,
                     team.getId(),
-                    memberIdsSnapshot,
-                    dto.getContactEmail(),
-                    dto.getPayoutMethod(),
-                    dto.getPayoutRef(),
+                    membersSnapshot,
+                    registerTeamDTO.getContactEmail(),
+                    registerTeamDTO.getPayoutMethod(),
+                    registerTeamDTO.getPayoutRef(),
                     LocalDateTime.now()
             );
 
-            participatingTeamRepository.save(pt);
+            participatingTeamRepository.save(participatingTeam);
 
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive()) {
+                tx.rollback();
+            }
             throw e;
         }
     }

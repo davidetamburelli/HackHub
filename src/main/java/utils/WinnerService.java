@@ -4,6 +4,7 @@ import model.RankingCandidate;
 import model.enums.RankingPolicy;
 import utils.strategy.RankingStrategy;
 import utils.strategy.ScoreDescThenEarliestSubmissionStrategy;
+import utils.strategy.ScoreDescThenMinorTeamSizeThenEarliestSubmission;
 import utils.strategy.ScoreDescThenTeamRegistrationOrderStrategy;
 
 import java.util.List;

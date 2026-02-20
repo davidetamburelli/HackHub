@@ -1,7 +1,7 @@
 package utils.facade;
 
 import model.dto.CallBookingRequest;
-import model.dto.CallBookingResult;
+import model.dto.requestdto.CallBookingResult;
 
 public interface ICalendarService {
 

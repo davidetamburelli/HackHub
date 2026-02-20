@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import model.Team;
 import model.User;
-import model.dto.CreateTeamDTO;
+import model.dto.requestdto.CreateTeamDTO;
 import repository.TeamRepository;
 import repository.UserRepository;
 import utils.DomainException;
@@ -15,7 +15,6 @@ public class TeamHandler {
     private final EntityManager em;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-
     private final TeamValidator teamValidator;
 
     public TeamHandler(EntityManager em) {
@@ -23,42 +22,43 @@ public class TeamHandler {
         this.teamRepository = new TeamRepository(em);
         this.userRepository = new UserRepository(em);
         this.teamValidator = new TeamValidator();
-
     }
 
-    public void createTeam(Long userId, CreateTeamDTO dto) {
-        if (userId == null) throw new IllegalArgumentException("L'ID utente è obbligatorio");
-
+    public void createTeam(Long userId, CreateTeamDTO createTeamDTO) {
         EntityTransaction tx = em.getTransaction();
 
         try {
             tx.begin();
 
-            teamValidator.validate(dto);
+            teamValidator.validate(createTeamDTO);
 
-            if (teamRepository.existsByName(dto.getName())) {
-                throw new DomainException("Esiste già un team con il nome: " + dto.getName());
+            boolean existByName = teamRepository.existsByName(createTeamDTO.getName());
+
+            if (existByName) {
+                throw new DomainException("Esiste già un team con questo nome");
             }
 
-            if (teamRepository.existsByMemberId(userId)) {
-                throw new DomainException("L'utente è già membro di un team e non può crearne uno nuovo.");
+            boolean userHasTeam = teamRepository.existsByMemberId(userId);
+
+            if (userHasTeam) {
+                throw new DomainException("L'utente fa già parte di un team");
             }
 
-            User leader = userRepository.getById(userId);
-            if (leader == null) {
-                throw new DomainException("Utente leader non trovato con ID: " + userId);
+            User user = userRepository.getById(userId);
+
+            if (user == null) {
+                throw new DomainException("Utente non trovato");
             }
 
-            Team team = new Team(dto.getName(), userId);
+            Team createdTeam = new Team(createTeamDTO.getName(), userId);
 
-            teamRepository.save(team);
+            teamRepository.save(createdTeam);
 
-            leader.assignTeam(team.getId());
+            user.assignTeam(createdTeam.getId());
 
-            userRepository.save(leader);
+            userRepository.save(user);
 
             tx.commit();
-            System.out.println("Team creato con successo: " + team.getName());
 
         } catch (Exception e) {
             if (tx.isActive()) {

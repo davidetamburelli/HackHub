@@ -73,6 +73,7 @@ public class SupportRequest {
 
     public void addReply(Long mentorId, String message, LocalDateTime answeredAt) {
         this.reply = new SupportReply(mentorId, message, answeredAt);
+        this.status = SupportRequestStatus.ANSWERED;
     }
 
     public void scheduleCall(

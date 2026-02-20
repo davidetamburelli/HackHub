@@ -1,4 +1,4 @@
-package model.dto;
+package model.dto.requestdto;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,4 +19,13 @@ public class PaymentResult {
     public static PaymentResult fail(String reason) {
         return new PaymentResult(false, null, reason);
     }
+
+    public String getTransactionId() {
+        return this.providerRef;
+    }
+
+    public String getErrorMessage() {
+        return this.failureReason;
+    }
+
 }

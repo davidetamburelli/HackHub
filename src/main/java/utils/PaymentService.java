@@ -1,7 +1,7 @@
 package utils;
 
 import utils.adapters.IPayoutAdapter;
-import model.dto.PaymentResult;
+import model.dto.requestdto.PaymentResult;
 import model.valueobjs.PayoutAccountRef;
 
 import java.util.List;

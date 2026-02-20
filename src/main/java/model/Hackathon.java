@@ -141,4 +141,8 @@ public class Hackathon {
     public void markPrizeFailed(String failureReason, LocalDateTime paidAt) {
         this.prizePayout = new PrizePayout(PrizeStatus.FAILED, paidAt, null, failureReason);
     }
+
+    public void closeEvaluations() {
+        this.status = HackathonStatus.CLOSED;
+    }
 }

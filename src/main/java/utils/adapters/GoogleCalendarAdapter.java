@@ -14,7 +14,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 import utils.adapters.ICalendarAdapter;
 import utils.facade.CalendarEventSpec;
-import model.dto.CallBookingResult;
+import model.dto.requestdto.CallBookingResult;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

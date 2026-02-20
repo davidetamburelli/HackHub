@@ -1,17 +1,30 @@
 package handlers;
 
-import builders.HackathonBuilder;
-import builders.IHackathonBuilder;
+import utils.builders.HackathonBuilder;
+import utils.builders.IHackathonBuilder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import model.Hackathon;
+import model.ParticipatingTeam;
+import model.RankingCandidate;
 import model.StaffProfile;
-import model.dto.CreateHackathonDTO;
+import model.Submission;
+import model.dto.requestdto.CreateHackathonDTO;
+import model.dto.requestdto.PaymentResult;
+import model.enums.HackathonStatus;
+import model.enums.PrizeStatus;
+import model.enums.RankingPolicy;
+import model.valueobjs.PayoutAccountRef;
 import repository.HackathonRepository;
+import repository.ParticipatingTeamRepository;
 import repository.StaffProfileRepository;
+import repository.SubmissionRepository;
 import utils.DomainException;
+import utils.IPaymentService;
+import utils.WinnerService;
 import validators.HackathonValidator;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,79 +34,210 @@ public class HackathonHandler {
 
     private final StaffProfileRepository staffProfileRepository;
     private final HackathonRepository hackathonRepository;
+    private final SubmissionRepository submissionRepository;
+    private final ParticipatingTeamRepository participatingTeamRepository;
 
     private final HackathonValidator hackathonValidator;
+    private final WinnerService winnerService;
+    private final IPaymentService paymentService;
 
-    public HackathonHandler(EntityManager em) {
+    public HackathonHandler(EntityManager em, IPaymentService paymentService) {
         this.em = em;
         this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
-        this.hackathonValidator = new HackathonValidator();
+        this.submissionRepository = new SubmissionRepository(em);
+        this.participatingTeamRepository = new ParticipatingTeamRepository(em);
 
+        this.hackathonValidator = new HackathonValidator();
+        this.winnerService = new WinnerService();
+        this.paymentService = paymentService;
     }
 
-    public void createHackathon(Long staffProfileId, CreateHackathonDTO dto) {
-        if (staffProfileId == null) throw new IllegalArgumentException("L'ID dell'organizzatore è obbligatorio");
-
+    public void createHackathon(Long staffProfileId, CreateHackathonDTO createHackathonDTO) {
         EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            hackathonValidator.validate(createHackathonDTO);
+            StaffProfile organizer = staffProfileRepository.getById(staffProfileId);
+            boolean existsByName = hackathonRepository.existsByName(createHackathonDTO.getName());
+            if (existsByName) {
+                throw new DomainException("Esiste già un hackathon con questo nome");
+            }
+            StaffProfile judge = staffProfileRepository.findByEmail(createHackathonDTO.getJudgeEmail());
+            if (judge == null) {
+                throw new DomainException("Nessun profilo staff trovato per l'email del giudice");
+            }
+            List<Long> mentorsId = new ArrayList<>();
+            if (createHackathonDTO.getMentorEmails() != null) {
+                for (String mentorEmail : createHackathonDTO.getMentorEmails()) {
+                    StaffProfile mentor = staffProfileRepository.findByEmail(mentorEmail);
+                    if (mentor == null) {
+                        throw new DomainException("Nessun profilo staff trovato per l'email del mentore: " + mentorEmail);
+                    }
+                    mentorsId.add(mentor.getId());
+                }
+            }
+            if (mentorsId == null) {
+                throw new DomainException("La lista dei mentori non è valida");
+            }
+            IHackathonBuilder builder = new HackathonBuilder();
+            Hackathon createdHackathon = builder
+                    .buildOrganizer(organizer.getId())
+                    .buildName(createHackathonDTO.getName())
+                    .buildType(createHackathonDTO.getType())
+                    .buildRegulation(createHackathonDTO.getRegulation())
+                    .buildLocation(createHackathonDTO.getLocation())
+                    .buildPrize(createHackathonDTO.getPrize())
+                    .buildMaxTeamSize(createHackathonDTO.getMaxTeamSize())
+                    .buildSubscriptionDates(createHackathonDTO.getSubscriptionDates())
+                    .buildDates(createHackathonDTO.getDates())
+                    .buildDelivery(createHackathonDTO.getDelivery())
+                    .buildJudge(judge.getId())
+                    .buildMentors(mentorsId)
+                    .buildRankingPolicy(createHackathonDTO.getRankingPolicy())
+                    .build();
+            hackathonRepository.save(createdHackathon);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
 
+    public void confirmEvaluations(Long judgeId, Long hackathonId) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            Hackathon hackathon = hackathonRepository.getById(hackathonId);
+            if (hackathon == null) {
+                throw new DomainException("Hackathon non trovato.");
+            }
+            if (!hackathon.getJudge().equals(judgeId)) {
+                throw new DomainException("Solo il giudice assegnato può confermare le valutazioni.");
+            }
+            List<RankingCandidate> candidates = submissionRepository.getRankingCandidates(hackathonId);
+            Long winnerParticipatingTeamId = winnerService.selectWinner(hackathon.getRankingPolicy(), candidates);
+            if (winnerParticipatingTeamId != null) {
+                hackathon.declareWinner(winnerParticipatingTeamId);
+                hackathon.close();
+                if (hackathon.getPrize() > 0) {
+                    ParticipatingTeam winnerTeam = participatingTeamRepository.getById(winnerParticipatingTeamId);
+                    PayoutAccountRef accountRef = winnerTeam.getPaymentAccountRef();
+                    PaymentResult result = paymentService.transfer(hackathon.getPrize(), accountRef);
+                    if (result.isSuccess()) {
+                        hackathon.confirmPrizePaid(result.getTransactionId(), LocalDateTime.now());
+                    } else {
+                        hackathon.markPrizeFailed(result.getErrorMessage(), LocalDateTime.now());
+                    }
+                } else {
+                    hackathon.confirmPrizePaid("NO_PRIZE", LocalDateTime.now());
+                }
+            } else {
+                throw new DomainException("Impossibile determinare un vincitore (nessun candidato valido).");
+            }
+            hackathonRepository.save(hackathon);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
+
+    public PaymentResult sendPrizeToWinner(Long staffProfileId, Long hackathonId) {
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
+            if (!isOrganizer) {
+                throw new DomainException("Operazione non consentita: non sei l'organizzatore di questo hackathon");
+            }
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.CLOSED) {
+                throw new DomainException("L'hackathon non è ancora chiuso");
+            }
+            Hackathon hackathon = hackathonRepository.getById(hackathonId);
+            if (hackathon == null) {
+                throw new DomainException("Hackathon non trovato");
+            }
+            Long participatingTeamId = hackathon.getWinnerParticipatingTeamId();
+            if (participatingTeamId == null) {
+                throw new DomainException("Nessun team vincitore assegnato a questo hackathon");
+            }
+            ParticipatingTeam participatingTeam = participatingTeamRepository.getByIdAndHackathonId(participatingTeamId, hackathonId);
+            double prize = hackathon.getPrize();
+            PrizeStatus prizeStatus = hackathon.getPrizeStatus();
+            if (prizeStatus == PrizeStatus.PAID) {
+                throw new DomainException("Il premio è già stato erogato");
+            }
+            PayoutAccountRef destination = participatingTeam.getPaymentAccountRef();
+            PaymentResult result = paymentService.transfer(prize, destination);
+            if (result.isSuccess()) {
+                hackathon.confirmPrizePaid(result.getTransactionId(), LocalDateTime.now());
+            } else {
+                hackathon.markPrizeFailed(result.getErrorMessage(), LocalDateTime.now());
+            }
+            hackathonRepository.save(hackathon);
+            tx.commit();
+            return result;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
+
+    public void declareWinner(Long staffProfileId, Long hackathonId) {
+        EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
 
-            hackathonValidator.validate(dto);
-
-            StaffProfile organizer = staffProfileRepository.getById(staffProfileId);
-            if (organizer == null) {
-                throw new DomainException("Organizzatore non trovato (ID: " + staffProfileId + ")");
+            boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
+            if (!isOrganizer) {
+                throw new DomainException("Operazione non autorizzata");
             }
 
-            if (hackathonRepository.existsByName(dto.getName())) {
-                throw new DomainException("Esiste già un hackathon con questo nome: " + dto.getName());
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.CLOSED) {
+                throw new DomainException("L'hackathon deve essere chiuso per proclamare il vincitore");
             }
 
-            StaffProfile judge = staffProfileRepository.findByEmail(dto.getJudgeEmail());
-            if (judge == null) {
-                throw new DomainException("Nessun profilo staff trovato per l'email del giudice: " + dto.getJudgeEmail());
-            }
+            List<ParticipatingTeam> eligibleParticipatingTeams = participatingTeamRepository.findEligibleForRanking(hackathonId);
+            List<RankingCandidate> candidates = new ArrayList<>();
 
-            List<Long> mentorIds = new ArrayList<>();
-            if (dto.getMentorEmails() != null && !dto.getMentorEmails().isEmpty()) {
-                for (String email : dto.getMentorEmails()) {
-                    StaffProfile mentor = staffProfileRepository.findByEmail(email);
-                    if (mentor == null) {
-                        throw new DomainException("Nessun profilo staff trovato per il mentore: " + email);
-                    }
-                    mentorIds.add(mentor.getId());
+            for (ParticipatingTeam pt : eligibleParticipatingTeams) {
+                Submission s = submissionRepository.findByHackathonIdAndParticipatingTeamId(hackathonId, pt.getId());
+                if (s != null && s.hasEvaluation()) {
+                    int baseScore = s.getScore();
+                    int penaltyPoints = pt.getTotalPenaltyPoints();
+                    int finalScore = baseScore - penaltyPoints;
+                    LocalDateTime submissionUpdatedAt = s.getUpdatedAt();
+                    LocalDateTime teamRegisteredAt = pt.getRegisteredAt();
+                    int teamSize = pt.getTeamSize();
+
+                    candidates.add(new RankingCandidate(
+                            pt.getId(),
+                            finalScore,
+                            submissionUpdatedAt,
+                            teamRegisteredAt,
+                            teamSize
+                    ));
                 }
             }
 
-            IHackathonBuilder builder = new HackathonBuilder();
+            if (candidates.isEmpty()) {
+                throw new DomainException("Nessun candidato valido per la classifica");
+            }
 
-            Hackathon hackathon = builder
-                    .buildName(dto.getName())
-                    .buildType(dto.getType())
-                    .buildPrize(dto.getPrize())
-                    .buildMaxTeamSize(dto.getMaxTeamSize())
-                    .buildRegulation(dto.getRegulation())
-                    .buildDelivery(dto.getDelivery())
-                    .buildLocation(dto.getLocation())
-                    .buildRankingPolicy(dto.getRankingPolicy())
-                    .buildSubscriptionDates(dto.getSubscriptionDates())
-                    .buildDates(dto.getDates())
-                    .buildOrganizer(organizer.getId())
-                    .buildJudge(judge.getId())
-                    .buildMentors(mentorIds)
-                    .build();
+            Hackathon h = hackathonRepository.getById(hackathonId);
+            RankingPolicy rankingPolicy = h.getRankingPolicy();
 
-            hackathonRepository.save(hackathon);
+            Long winnerParticipatingTeamId = winnerService.selectWinner(rankingPolicy, candidates);
+
+            h.declareWinner(winnerParticipatingTeamId);
+            hackathonRepository.save(h);
 
             tx.commit();
-            System.out.println("Hackathon creato con successo: " + hackathon.getName());
-
         } catch (Exception e) {
-            if (tx.isActive()) {
-                tx.rollback();
-            }
+            if (tx.isActive()) tx.rollback();
             throw e;
         }
     }

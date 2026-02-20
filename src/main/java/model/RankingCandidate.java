@@ -36,11 +36,13 @@ public class RankingCandidate {
             Long eligibleParticipatingTeamId,
             int finalScore,
             LocalDateTime submissionUpdatedAt,
-            LocalDateTime teamRegisteredAt
+            LocalDateTime teamRegisteredAt,
+            int teamSize
     ) {
         this.eligibleParticipatingTeam = eligibleParticipatingTeamId;
         this.finalScore = finalScore;
         this.submissionUpdatedAt = submissionUpdatedAt;
         this.teamRegisteredAt = teamRegisteredAt;
+        this.teamSize = teamSize;
     }
 }

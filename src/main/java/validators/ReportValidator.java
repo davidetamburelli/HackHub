@@ -1,7 +1,7 @@
 package validators;
 
-import model.dto.ApplySanctionDTO;
-import model.dto.CreateReportDTO;
+import model.dto.requestdto.ApplySanctionDTO;
+import model.dto.requestdto.CreateReportDTO;
 import model.enums.ReportResolution;
 
 public class ReportValidator {

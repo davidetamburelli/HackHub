@@ -6,7 +6,7 @@ import model.Hackathon;
 import model.ParticipatingTeam;
 import model.StaffProfile;
 import model.Submission;
-import model.dto.AddSubmissionDTO;
+import model.dto.requestdto.AddSubmissionDTO;
 import model.enums.HackathonStatus;
 import repository.*;
 import utils.DomainException;
@@ -17,7 +17,6 @@ import java.util.List;
 public class SubmissionHandler {
 
     private final EntityManager em;
-
     private final SubmissionValidator submissionValidator;
     private final StaffProfileRepository staffProfileRepository;
     private final SubmissionRepository submissionRepository;
@@ -26,50 +25,48 @@ public class SubmissionHandler {
 
     public SubmissionHandler(EntityManager em) {
         this.em = em;
-
         this.staffProfileRepository = new StaffProfileRepository(em);
         this.submissionRepository = new SubmissionRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
         this.submissionValidator = new SubmissionValidator();
-
     }
 
-    public void createSubmission(Long userId, Long hackathonId, AddSubmissionDTO dto) {
+    public void createSubmission(Long userId, Long hackathonId, AddSubmissionDTO addSubmissionDTO) {
         EntityTransaction tx = em.getTransaction();
-
         try {
             tx.begin();
 
-            submissionValidator.validate(dto);
+            submissionValidator.validate(addSubmissionDTO);
 
-            HackathonStatus status = hackathonRepository.findStatusByHackathonId(hackathonId);
-            if (status != HackathonStatus.RUNNING) {
-                throw new DomainException("Impossibile inviare: l'hackathon non è attualmente in corso");
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.RUNNING) {
+                throw new DomainException("L'hackathon non è in corso");
             }
 
-            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndActiveMemberId(hackathonId, userId);
-            if (pt == null) {
-                throw new DomainException("Team non iscritto all'hackathon o utente non membro attivo");
+            ParticipatingTeam participatingTeam = participatingTeamRepository.findByHackathonIdAndActiveMemberId(hackathonId, userId);
+            if (participatingTeam == null) {
+                throw new DomainException("Utente non autorizzato o team non trovato");
             }
 
-            boolean exists = submissionRepository.existsByParticipatingTeamId(pt.getId());
+            boolean exists = submissionRepository.existsByParticipatingTeamId(participatingTeam.getId());
             if (exists) {
-                throw new DomainException("Soluzione già inviata da questo team");
+                throw new DomainException("Sottomissione già esistente per questo team");
             }
 
-            if (pt.isDisqualified()) {
-                throw new DomainException("Operazione negata: il tuo team è stato squalificato da questo hackathon");
+            boolean isDisqualified = participatingTeam.isDisqualified();
+            if (isDisqualified) {
+                throw new DomainException("Il team è stato squalificato");
             }
 
-            Submission submission = new Submission(
+            Submission createdSubmission = new Submission(
                     hackathonId,
-                    pt.getId(),
-                    dto.getResponse(),
-                    dto.getResponseURL()
+                    participatingTeam.getId(),
+                    addSubmissionDTO.getResponse(),
+                    addSubmissionDTO.getResponseURL()
             );
 
-            submissionRepository.save(submission);
+            submissionRepository.save(createdSubmission);
 
             tx.commit();
         } catch (Exception e) {
@@ -79,7 +76,6 @@ public class SubmissionHandler {
     }
 
     public List<Submission> getSubmissionsList(Long staffProfileId, Long hackathonId) {
-
         Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) throw new DomainException("Hackathon non trovato");
 
@@ -96,7 +92,6 @@ public class SubmissionHandler {
     }
 
     public Submission getSubmissionDetails(Long staffProfileId, Long hackathonId, Long submissionId) {
-
         Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) throw new DomainException("Hackathon non trovato");
 

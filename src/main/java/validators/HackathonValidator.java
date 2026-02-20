@@ -1,7 +1,7 @@
 package validators;
 
-import model.dto.CreateHackathonDTO;
-import model.dto.HackathonSearchCriteria;
+import model.dto.requestdto.CreateHackathonDTO;
+import model.dto.requestdto.HackathonSearchCriteria;
 import model.valueobjs.Period;
 import utils.DomainException;
 

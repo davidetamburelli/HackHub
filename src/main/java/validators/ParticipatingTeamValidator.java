@@ -1,6 +1,6 @@
 package validators;
 
-import model.dto.RegisterTeamDTO;
+import model.dto.requestdto.RegisterTeamDTO;
 
 public class ParticipatingTeamValidator {
 

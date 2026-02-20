@@ -2,8 +2,9 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import model.Hackathon;
 import model.Submission;
-import model.dto.AddEvaluationDTO;
+import model.dto.requestdto.AddEvaluationDTO;
 import model.enums.HackathonStatus;
 import repository.HackathonRepository;
 import repository.StaffProfileRepository;
@@ -60,6 +61,43 @@ public class EvaluationHandler {
             submission.addEvaluation(dto.getScore(), dto.getComment());
 
             submissionRepository.save(submission);
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
+
+    public void confirmEvaluations(Long staffProfileId, Long hackathonId) {
+        EntityTransaction tx = em.getTransaction();
+
+        try {
+            tx.begin();
+
+            boolean isJudge = hackathonRepository.existsJudge(hackathonId, staffProfileId);
+            if (!isJudge) {
+                throw new DomainException("Operazione non autorizzata: solo il giudice può confermare le valutazioni.");
+            }
+
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.IN_EVALUATION) {
+                throw new DomainException("Impossibile confermare le valutazioni: l'hackathon non è attualmente in fase di valutazione.");
+            }
+
+            boolean evaluationMissing = submissionRepository.existsByHackathonIdAndEvaluationIsNull(hackathonId);
+            if (evaluationMissing) {
+                throw new DomainException("Impossibile confermare: ci sono ancora sottomissioni senza valutazione per questo hackathon.");
+            }
+
+            Hackathon hackathon = hackathonRepository.getById(hackathonId);
+            if (hackathon == null) {
+                throw new DomainException("Hackathon non trovato.");
+            }
+
+            hackathon.close();
+
+            hackathonRepository.save(hackathon);
 
             tx.commit();
         } catch (Exception e) {

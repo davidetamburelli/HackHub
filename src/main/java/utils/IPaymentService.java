@@ -1,6 +1,6 @@
 package utils;
 
-import model.dto.PaymentResult;
+import model.dto.requestdto.PaymentResult;
 import model.valueobjs.PayoutAccountRef;
 
 public interface IPaymentService {
