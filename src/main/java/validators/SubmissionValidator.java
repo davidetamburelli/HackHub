@@ -5,6 +5,7 @@ import model.ParticipatingTeam;
 import model.Team;
 import model.User;
 import model.dto.AddSubmissionDTO;
+import model.enums.HackathonStatus;
 import repository.*;
 import utils.DomainException;
 
@@ -34,13 +35,16 @@ public class SubmissionValidator {
         if (dto == null) throw new IllegalArgumentException("DTO nullo");
         if (userId == null || hackathonId == null) throw new IllegalArgumentException("ID mancanti");
 
-        if (dto.getResponse() == null || dto.getResponse().isBlank())
+        if (dto.getResponse() == null || dto.getResponse().isBlank()) {
             throw new IllegalArgumentException("Testo risposta mancante");
+        }
 
         Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) throw new DomainException("Hackathon non trovato");
 
-        hackathon.assertRunning();
+        if (hackathon.getStatus() != HackathonStatus.RUNNING) {
+            throw new DomainException("Impossibile inviare: l'hackathon non è attualmente in corso");
+        }
 
         User user = userRepository.getById(userId);
         if (user == null) throw new DomainException("Utente non trovato");
@@ -48,13 +52,15 @@ public class SubmissionValidator {
         Team team = teamRepository.findByMemberId(user.getId());
         if (team == null) throw new DomainException("L'utente non ha un team");
 
-        team.assertLeader(user);
+        if (!team.getLeader().equals(userId)) {
+            throw new DomainException("Operazione non autorizzata: solo il leader del team può inviare la soluzione");
+        }
 
         ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathon.getId(), team.getId());
         if (pt == null) throw new DomainException("Team non iscritto all'hackathon");
 
         if (submissionRepository.existsByParticipatingTeamId(pt.getId())) {
-            throw new DomainException("Soluzione già inviata");
+            throw new DomainException("Soluzione già inviata da questo team");
         }
     }
 }

@@ -48,9 +48,15 @@ public class ReportValidator {
         ParticipatingTeam team = participatingTeamRepository.getById(participatingTeamId);
         if (team == null) throw new DomainException("Team partecipante non trovato");
 
-        hackathon.assertStaff(mentor);
+        boolean isStaff = hackathon.getOrganizer().equals(staffId) ||
+                hackathon.getJudge().equals(staffId) ||
+                hackathon.getMentors().contains(staffId);
 
-        if (!team.getHackathon().getId().equals(hackathon.getId())) {
+        if (!isStaff) {
+            throw new DomainException("Operazione non autorizzata: l'utente non fa parte dello staff di questo hackathon");
+        }
+
+        if (!team.getHackathon().equals(hackathon.getId())) {
             throw new DomainException("Il team selezionato non partecipa all'hackathon specificato.");
         }
     }
