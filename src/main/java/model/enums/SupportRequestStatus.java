@@ -1,6 +1,9 @@
 package model.enums;
 
 public enum SupportRequestStatus {
+
     OPEN,
-    ANSWERED
+    ANSWERED,
+    CALL_SCHEDULED
+
 }
