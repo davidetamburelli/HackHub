@@ -14,8 +14,8 @@ public class InvitationRepository extends AbstractRepository<Invitation> {
 
     public boolean existsPendingByTeamIdAndInviteeId(Long teamId, Long inviteeId) {
         String jpql = "SELECT COUNT(i) FROM Invitation i " +
-                "WHERE i.team.id = :teamId " +
-                "AND i.invitee.id = :inviteeId " +
+                "WHERE i.team = :teamId " +
+                "AND i.invitee = :inviteeId " +
                 "AND i.status = :status";
 
         Long count = em.createQuery(jpql, Long.class)
@@ -31,7 +31,7 @@ public class InvitationRepository extends AbstractRepository<Invitation> {
         try {
             String jpql = "SELECT i FROM Invitation i " +
                     "WHERE i.id = :invitationId " +
-                    "AND i.invitee.id = :userId " +
+                    "AND i.invitee = :userId " +
                     "AND i.status = :status";
 
             TypedQuery<Invitation> query = em.createQuery(jpql, Invitation.class);

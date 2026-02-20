@@ -13,7 +13,7 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
 
     public boolean existsByHackathonIdAndTeamId(Long hackathonId, Long teamId) {
         String jpql = "SELECT COUNT(pt) FROM ParticipatingTeam pt " +
-                "WHERE pt.hackathon.id = :hackathonId AND pt.team.id = :teamId";
+                "WHERE pt.hackathon = :hackathonId AND pt.team = :teamId";
 
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("hackathonId", hackathonId)
@@ -26,7 +26,7 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
     public ParticipatingTeam findByHackathonIdAndTeamId(Long hackathonId, Long teamId) {
         try {
             String jpql = "SELECT pt FROM ParticipatingTeam pt " +
-                    "WHERE pt.hackathon.id = :hackathonId AND pt.team.id = :teamId";
+                    "WHERE pt.hackathon = :hackathonId AND pt.team = :teamId";
 
             TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
             query.setParameter("hackathonId", hackathonId);
@@ -41,7 +41,7 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
     public ParticipatingTeam getByIdAndHackathonId(Long participatingTeamId, Long hackathonId) {
         try {
             String jpql = "SELECT pt FROM ParticipatingTeam pt " +
-                    "WHERE pt.id = :ptId AND pt.hackathon.id = :hackathonId";
+                    "WHERE pt.id = :ptId AND pt.hackathon = :hackathonId";
 
             TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
             query.setParameter("ptId", participatingTeamId);
@@ -56,8 +56,7 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
     public ParticipatingTeam findByHackathonIdAndActiveMemberId(Long hackathonId, Long userId) {
         try {
             String jpql = "SELECT pt FROM ParticipatingTeam pt " +
-                    "JOIN pt.team t JOIN t.members m " +
-                    "WHERE pt.hackathon.id = :hackathonId AND m.id = :userId";
+                    "WHERE pt.hackathon = :hackathonId AND :userId MEMBER OF pt.activeMembers";
 
             TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
             query.setParameter("hackathonId", hackathonId);

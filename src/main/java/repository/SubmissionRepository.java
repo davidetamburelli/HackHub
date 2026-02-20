@@ -14,7 +14,7 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
 
     public Submission findByParticipatingTeamId(Long participatingTeamId) {
         try {
-            String jpql = "SELECT s FROM Submission s WHERE s.participatingTeam.id = :ptId";
+            String jpql = "SELECT s FROM Submission s WHERE s.participatingTeam = :ptId";
 
             TypedQuery<Submission> query = em.createQuery(jpql, Submission.class);
             query.setParameter("ptId", participatingTeamId);
@@ -26,7 +26,7 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
     }
 
     public boolean existsByParticipatingTeamId(Long participatingTeamId) {
-        String jpql = "SELECT COUNT(s) FROM Submission s WHERE s.participatingTeam.id = :ptId";
+        String jpql = "SELECT COUNT(s) FROM Submission s WHERE s.participatingTeam = :ptId";
 
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("ptId", participatingTeamId)
@@ -36,7 +36,7 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
     }
 
     public List<Submission> findByHackathonId(Long hackathonId) {
-        String jpql = "SELECT s FROM Submission s WHERE s.hackathon.id = :hackathonId";
+        String jpql = "SELECT s FROM Submission s WHERE s.hackathon = :hackathonId";
 
         TypedQuery<Submission> query = em.createQuery(jpql, Submission.class);
         query.setParameter("hackathonId", hackathonId);
@@ -47,7 +47,7 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
     public Submission getByIdAndHackathonId(Long submissionId, Long hackathonId) {
         try {
             String jpql = "SELECT s FROM Submission s " +
-                    "WHERE s.id = :submissionId AND s.hackathon.id = :hackathonId";
+                    "WHERE s.id = :submissionId AND s.hackathon = :hackathonId";
 
             TypedQuery<Submission> query = em.createQuery(jpql, Submission.class);
             query.setParameter("submissionId", submissionId);

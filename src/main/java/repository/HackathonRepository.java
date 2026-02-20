@@ -49,7 +49,7 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
             }
         }
 
-        Path<LocalDate> startDate = h.get("executionPeriod").get("startDate");
+        Path<LocalDate> startDate = h.get("dates").get("startDate");
 
         if (c.startsAfter() != null) {
             preds.add(cb.greaterThanOrEqualTo(startDate, c.startsAfter()));
@@ -80,8 +80,8 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
     }
 
     public boolean existsMentor(Long hackathonId, Long staffProfileId) {
-        String jpql = "SELECT COUNT(h) FROM Hackathon h JOIN h.mentors m " +
-                "WHERE h.id = :hackathonId AND m.id = :staffId";
+        String jpql = "SELECT COUNT(h) FROM Hackathon h " +
+                "WHERE h.id = :hackathonId AND :staffId MEMBER OF h.mentors";
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("hackathonId", hackathonId)
                 .setParameter("staffId", staffProfileId)
@@ -91,7 +91,7 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
 
     public boolean existsJudge(Long hackathonId, Long staffProfileId) {
         String jpql = "SELECT COUNT(h) FROM Hackathon h " +
-                "WHERE h.id = :hackathonId AND h.judge.id = :staffId";
+                "WHERE h.id = :hackathonId AND h.judge = :staffId";
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("hackathonId", hackathonId)
                 .setParameter("staffId", staffProfileId)
@@ -112,9 +112,9 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
     }
 
     public boolean existsStaff(Long hackathonId, Long staffProfileId) {
-        String jpql = "SELECT COUNT(h) FROM Hackathon h LEFT JOIN h.mentors m " +
+        String jpql = "SELECT COUNT(h) FROM Hackathon h " +
                 "WHERE h.id = :hackathonId " +
-                "AND (h.organizer.id = :staffId OR h.judge.id = :staffId OR m.id = :staffId)";
+                "AND (h.organizer = :staffId OR h.judge = :staffId OR :staffId MEMBER OF h.mentors)";
 
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("hackathonId", hackathonId)
