@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.criteria.*;
 import model.Hackathon;
-import model.dto.HackathonSearchCriteria;
+import model.dto.requestdto.HackathonSearchCriteria;
 import model.enums.HackathonStatus;
 
 import java.time.LocalDate;
@@ -123,6 +123,11 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
         }
     }
 
+    public List<Hackathon> findAll() {
+        String jpql = "SELECT h FROM Hackathon h";
+        return em.createQuery(jpql, Hackathon.class).getResultList();
+    }
+
     public boolean existsStaff(Long hackathonId, Long staffProfileId) {
         String jpql = "SELECT COUNT(h) FROM Hackathon h " +
                 "WHERE h.id = :hackathonId " +
@@ -136,8 +141,4 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
         return count > 0;
     }
 
-    public List<Hackathon> findAll() {
-        String jpql = "SELECT h FROM Hackathon h";
-        return em.createQuery(jpql, Hackathon.class).getResultList();
-    }
 }

@@ -5,6 +5,8 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import model.ParticipatingTeam;
 
+import java.util.List;
+
 public class ParticipatingTeamRepository extends AbstractRepository<ParticipatingTeam> {
 
     public ParticipatingTeamRepository(EntityManager em) {
@@ -66,5 +68,16 @@ public class ParticipatingTeamRepository extends AbstractRepository<Participatin
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    public List<ParticipatingTeam> findEligibleForRanking(Long hackathonId) {
+        String jpql = "SELECT pt FROM ParticipatingTeam pt " +
+                "WHERE pt.hackathon = :hackathonId " +
+                "AND pt.disqualified = false";
+
+        TypedQuery<ParticipatingTeam> query = em.createQuery(jpql, ParticipatingTeam.class);
+        query.setParameter("hackathonId", hackathonId);
+
+        return query.getResultList();
     }
 }
