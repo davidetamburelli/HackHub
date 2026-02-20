@@ -2,12 +2,15 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import model.ParticipatingTeam;
 import model.Report;
 import model.dto.CreateReportDTO;
+import model.enums.HackathonStatus;
 import repository.HackathonRepository;
 import repository.ParticipatingTeamRepository;
 import repository.ReportRepository;
 import repository.StaffProfileRepository;
+import utils.DomainException;
 import validators.ReportValidator;
 
 import java.time.LocalDateTime;
@@ -30,13 +33,8 @@ public class ReportHandler {
         this.hackathonRepository = new HackathonRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
         this.reportRepository = new ReportRepository(em);
+        this.reportValidator = new ReportValidator();
 
-        this.reportValidator = new ReportValidator(
-                staffProfileRepository,
-                hackathonRepository,
-                participatingTeamRepository,
-                reportRepository
-        );
     }
 
     public void createReport(Long staffProfileId, Long hackathonId, Long participatingTeamId, CreateReportDTO createReportDTO) {
@@ -45,7 +43,22 @@ public class ReportHandler {
         try {
             tx.begin();
 
-            reportValidator.validate(createReportDTO, staffProfileId, hackathonId, participatingTeamId);
+            reportValidator.validate(createReportDTO);
+
+            boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+            if (!isMentor) {
+                throw new DomainException("Operazione non autorizzata: non sei un mentore per questo hackathon");
+            }
+
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.RUNNING) {
+                throw new DomainException("Impossibile inviare una segnalazione: l'hackathon non è attualmente in corso");
+            }
+
+            ParticipatingTeam team = participatingTeamRepository.getByIdAndHackathonId(participatingTeamId, hackathonId);
+            if (team == null) {
+                throw new DomainException("Team partecipante non trovato per questo hackathon");
+            }
 
             Report report = new Report(
                     hackathonId,
