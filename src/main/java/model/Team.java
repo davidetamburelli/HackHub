@@ -47,4 +47,9 @@ public class Team {
     public List<Long> getMemberIdsSnapshot() {
         return new ArrayList<>(this.members);
     }
+
+    public int getTeamSize() {
+        return this.members.size();
+    }
+
 }
