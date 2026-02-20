@@ -42,7 +42,7 @@ public class EvaluationHandler {
 
             Submission submission = submissionRepository.getById(submissionId);
 
-            submission.addEvaluation(staffProfileId, dto.getScore(), dto.getComment());
+            submission.addEvaluation(dto.getScore(), dto.getComment());
 
             submissionRepository.save(submission);
 

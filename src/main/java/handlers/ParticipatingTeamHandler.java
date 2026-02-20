@@ -2,10 +2,8 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import model.Hackathon;
 import model.ParticipatingTeam;
 import model.Team;
-import model.User;
 import repository.HackathonRepository;
 import repository.ParticipatingTeamRepository;
 import repository.TeamRepository;
@@ -46,13 +44,13 @@ public class ParticipatingTeamHandler {
 
             validator.validate(userId, hackathonId);
 
-            User user = userRepository.getById(userId);
-            Team team = teamRepository.findByMemberId(user.getId());
-            Hackathon hackathon = hackathonRepository.getById(hackathonId);
+            Team team = teamRepository.findByMemberId(userId);
 
-            ParticipatingTeam pt = new ParticipatingTeam(hackathon, team);
-
-            hackathon.addParticipatingTeam(pt);
+            ParticipatingTeam pt = new ParticipatingTeam(
+                    hackathonId,
+                    team.getId(),
+                    team.getMemberIdsSnapshot()
+            );
 
             participatingTeamRepository.save(pt);
 

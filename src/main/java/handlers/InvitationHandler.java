@@ -42,17 +42,19 @@ public class InvitationHandler {
             Team team = teamRepository.findByMemberId(inviter.getId());
             if (team == null) throw new DomainException("Devi appartenere a un team per invitare qualcuno.");
 
-            team.assertLeader(inviter);
+            if (!team.getLeader().equals(inviter.getId())) {
+                throw new DomainException("Solo il leader può invitare nuovi membri.");
+            }
 
-            if (invitee.getTeamId() != null) {
-                throw new DomainException("L'utente " + invitee.getUsername().getValue() + " fa già parte di un team.");
+            if (invitee.getTeam() != null) {
+                throw new DomainException("L'utente " + invitee.getUsername() + " fa già parte di un team.");
             }
 
             if (invitationRepository.existsPendingByTeamIdAndInviteeId(team.getId(), invitee.getId())) {
                 throw new DomainException("Esiste già un invito in attesa per questo utente.");
             }
 
-            Invitation invitation = new Invitation(team, invitee);
+            Invitation invitation = new Invitation(team.getId(), invitee.getId());
             invitationRepository.save(invitation);
 
             tx.commit();
@@ -72,13 +74,16 @@ public class InvitationHandler {
 
             if (user == null || invitation == null) throw new DomainException("Invito o Utente non trovati");
 
-            invitation.assertInvitee(user);
-            invitation.assertPending();
+            if (!invitation.getInvitee().equals(userId)) {
+                throw new DomainException("Operazione non autorizzata: l'invito non è rivolto a te.");
+            }
 
             invitation.accept();
 
-            Team team = invitation.getTeam();
-            team.addMember(user);
+            Team team = teamRepository.getById(invitation.getTeamId());
+
+            team.addMember(userId);
+            user.assignTeam(team.getId());
 
             invitationRepository.save(invitation);
             teamRepository.save(team);
@@ -101,10 +106,12 @@ public class InvitationHandler {
 
             if (user == null || invitation == null) throw new DomainException("Invito o Utente non trovati");
 
-            invitation.assertInvitee(user);
-            invitation.assertPending();
+            if (!invitation.getInvitee().equals(userId)) {
+                throw new DomainException("Operazione non autorizzata: l'invito non è rivolto a te.");
+            }
 
             invitation.reject();
+
             invitationRepository.save(invitation);
 
             tx.commit();
