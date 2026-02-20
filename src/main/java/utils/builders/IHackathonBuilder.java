@@ -1,4 +1,4 @@
-package builders;
+package utils.builders;
 
 import model.Hackathon;
 import model.enums.RankingPolicy;
