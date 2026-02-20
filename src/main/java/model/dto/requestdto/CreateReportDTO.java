@@ -1,4 +1,4 @@
-package model.dto;
+package model.dto.requestdto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,10 +10,9 @@ import model.enums.Urgency;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateSupportRequestDTO {
+public class CreateReportDTO {
 
-    private String title;
-    private String description;
+    private String reason;
     private Urgency urgency;
 
 }

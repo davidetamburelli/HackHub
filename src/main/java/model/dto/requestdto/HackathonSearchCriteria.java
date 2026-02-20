@@ -1,4 +1,4 @@
-package model.dto;
+package model.dto.requestdto;
 
 import model.enums.HackathonStatus;
 import java.time.LocalDate;

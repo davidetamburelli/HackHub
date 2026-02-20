@@ -1,4 +1,4 @@
-package model.dto;
+package model.dto.requestdto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,9 +9,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddEvaluationDTO {
+public class AddSubmissionDTO {
 
-    private int score;
-    private String comment;
+    private String response;
+    private String responseURL;
 
 }
