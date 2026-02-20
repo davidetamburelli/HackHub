@@ -6,9 +6,8 @@ import model.Hackathon;
 import model.ParticipatingTeam;
 import model.StaffProfile;
 import model.SupportRequest;
-import model.Team;
-import model.User;
 import model.dto.CreateSupportRequestDTO;
+import model.enums.HackathonStatus;
 import repository.*;
 import utils.DomainException;
 import validators.SupportRequestValidator;
@@ -21,8 +20,6 @@ public class SupportRequestHandler {
     private final EntityManager em;
 
     private final SupportRequestValidator supportRequestValidator;
-    private final UserRepository userRepository;
-    private final TeamRepository teamRepository;
     private final ParticipatingTeamRepository participatingTeamRepository;
     private final SupportRequestRepository supportRequestRepository;
     private final StaffProfileRepository staffProfileRepository;
@@ -31,21 +28,12 @@ public class SupportRequestHandler {
     public SupportRequestHandler(EntityManager em) {
         this.em = em;
 
-        this.userRepository = new UserRepository(em);
-        this.teamRepository = new TeamRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
         this.supportRequestRepository = new SupportRequestRepository(em);
         this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
+        this.supportRequestValidator = new SupportRequestValidator();
 
-        this.supportRequestValidator = new SupportRequestValidator(
-                userRepository,
-                teamRepository,
-                hackathonRepository,
-                participatingTeamRepository,
-                supportRequestRepository,
-                staffProfileRepository
-        );
     }
 
     public void createSupportRequest(Long userId, Long hackathonId, CreateSupportRequestDTO dto) {
@@ -53,10 +41,17 @@ public class SupportRequestHandler {
         try {
             tx.begin();
 
-            supportRequestValidator.validate(dto, userId, hackathonId);
+            supportRequestValidator.validate(dto);
 
-            Team team = teamRepository.findByMemberId(userId);
-            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathonId, team.getId());
+            HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (hackathonStatus != HackathonStatus.RUNNING) {
+                throw new DomainException("Impossibile aprire un ticket: l'hackathon non è attualmente in corso");
+            }
+
+            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndActiveMemberId(hackathonId, userId);
+            if (pt == null) {
+                throw new DomainException("Non sei un membro attivo di un team iscritto a questo hackathon");
+            }
 
             SupportRequest request = new SupportRequest(
                     hackathonId,
@@ -75,7 +70,6 @@ public class SupportRequestHandler {
             throw e;
         }
     }
-
 
     public List<SupportRequest> getSupportRequestsList(Long staffProfileId, Long hackathonId) {
 
