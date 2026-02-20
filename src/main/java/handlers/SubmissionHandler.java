@@ -6,8 +6,8 @@ import model.Hackathon;
 import model.ParticipatingTeam;
 import model.StaffProfile;
 import model.Submission;
-import model.Team;
 import model.dto.AddSubmissionDTO;
+import model.enums.HackathonStatus;
 import repository.*;
 import utils.DomainException;
 import validators.SubmissionValidator;
@@ -21,9 +21,7 @@ public class SubmissionHandler {
     private final SubmissionValidator submissionValidator;
     private final StaffProfileRepository staffProfileRepository;
     private final SubmissionRepository submissionRepository;
-    private final UserRepository userRepository;
     private final HackathonRepository hackathonRepository;
-    private final TeamRepository teamRepository;
     private final ParticipatingTeamRepository participatingTeamRepository;
 
     public SubmissionHandler(EntityManager em) {
@@ -31,18 +29,10 @@ public class SubmissionHandler {
 
         this.staffProfileRepository = new StaffProfileRepository(em);
         this.submissionRepository = new SubmissionRepository(em);
-        this.userRepository = new UserRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
-        this.teamRepository = new TeamRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
+        this.submissionValidator = new SubmissionValidator();
 
-        this.submissionValidator = new SubmissionValidator(
-                hackathonRepository,
-                userRepository,
-                teamRepository,
-                participatingTeamRepository,
-                submissionRepository
-        );
     }
 
     public void createSubmission(Long userId, Long hackathonId, AddSubmissionDTO dto) {
@@ -51,10 +41,26 @@ public class SubmissionHandler {
         try {
             tx.begin();
 
-            submissionValidator.validate(dto, userId, hackathonId);
+            submissionValidator.validate(dto);
 
-            Team team = teamRepository.findByMemberId(userId);
-            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathonId, team.getId());
+            HackathonStatus status = hackathonRepository.findStatusByHackathonId(hackathonId);
+            if (status != HackathonStatus.RUNNING) {
+                throw new DomainException("Impossibile inviare: l'hackathon non è attualmente in corso");
+            }
+
+            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndActiveMemberId(hackathonId, userId);
+            if (pt == null) {
+                throw new DomainException("Team non iscritto all'hackathon o utente non membro attivo");
+            }
+
+            boolean exists = submissionRepository.existsByParticipatingTeamId(pt.getId());
+            if (exists) {
+                throw new DomainException("Soluzione già inviata da questo team");
+            }
+
+            if (pt.isDisqualified()) {
+                throw new DomainException("Operazione negata: il tuo team è stato squalificato da questo hackathon");
+            }
 
             Submission submission = new Submission(
                     hackathonId,
