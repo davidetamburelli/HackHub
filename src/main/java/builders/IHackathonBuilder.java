@@ -1,7 +1,6 @@
 package builders;
 
 import model.Hackathon;
-import model.StaffProfile;
 import model.enums.RankingPolicy;
 import model.valueobjs.Period;
 
@@ -16,9 +15,9 @@ public interface IHackathonBuilder {
     IHackathonBuilder buildPrize(double prize);
     IHackathonBuilder buildMaxTeamSize(int maxTeamSize);
     IHackathonBuilder buildRegulation(String regulation);
-    IHackathonBuilder buildOrganizer(StaffProfile organizer);
-    IHackathonBuilder buildJudge(StaffProfile judge);
-    IHackathonBuilder buildMentors(List<StaffProfile> mentors);
+    IHackathonBuilder buildOrganizer(Long organizerId);
+    IHackathonBuilder buildJudge(Long judgeId);
+    IHackathonBuilder buildMentors(List<Long> mentorsId);
     IHackathonBuilder buildSubscriptionDates(Period subscriptionDates);
     IHackathonBuilder buildDates(Period dates);
     IHackathonBuilder buildDelivery(String delivery);

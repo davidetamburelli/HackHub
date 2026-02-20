@@ -46,18 +46,21 @@ public class HackathonHandler {
             hackathonValidator.validate(dto, staffProfileId);
 
             StaffProfile organizer = staffProfileRepository.getById(staffProfileId);
+            if (organizer == null) {
+                throw new DomainException("Organizzatore non trovato");
+            }
 
             StaffProfile judge = staffProfileRepository.findByEmail(dto.getJudgeEmail());
             if (judge == null) {
                 throw new DomainException("Giudice non trovato per email: " + dto.getJudgeEmail());
             }
 
-            List<StaffProfile> mentors = new ArrayList<>();
+            List<Long> mentorIds = new ArrayList<>();
             if (dto.getMentorEmails() != null) {
                 for (String email : dto.getMentorEmails()) {
                     StaffProfile mentor = staffProfileRepository.findByEmail(email);
                     if (mentor != null) {
-                        mentors.add(mentor);
+                        mentorIds.add(mentor.getId());
                     }
                 }
             }
@@ -75,9 +78,9 @@ public class HackathonHandler {
                     .buildRankingPolicy(dto.getRankingPolicy())
                     .buildSubscriptionDates(dto.getSubscriptionDates())
                     .buildDates(dto.getDates())
-                    .buildOrganizer(organizer)
-                    .buildJudge(judge)
-                    .buildMentors(mentors)
+                    .buildOrganizer(organizer.getId())
+                    .buildJudge(judge.getId())
+                    .buildMentors(mentorIds)
                     .build();
 
             hackathonRepository.save(hackathon);

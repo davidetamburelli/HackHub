@@ -1,7 +1,6 @@
 package builders;
 
 import model.Hackathon;
-import model.StaffProfile;
 import model.enums.RankingPolicy;
 import model.valueobjs.Period;
 
@@ -16,9 +15,12 @@ public class HackathonBuilder implements IHackathonBuilder {
     private double prize;
     private int maxTeamSize;
     private String regulation;
-    private StaffProfile organizer;
-    private StaffProfile judge;
-    private List<StaffProfile> mentors;
+
+    // Sostituiti gli oggetti con i relativi ID numerici
+    private Long organizerId;
+    private Long judgeId;
+    private List<Long> mentorsId;
+
     private Period subscriptionDates;
     private Period dates;
     private String delivery;
@@ -36,9 +38,9 @@ public class HackathonBuilder implements IHackathonBuilder {
         this.prize = 0.0;
         this.maxTeamSize = 0;
         this.regulation = null;
-        this.organizer = null;
-        this.judge = null;
-        this.mentors = new ArrayList<>();
+        this.organizerId = null;
+        this.judgeId = null;
+        this.mentorsId = new ArrayList<>();
         this.subscriptionDates = null;
         this.dates = null;
         this.delivery = null;
@@ -82,20 +84,20 @@ public class HackathonBuilder implements IHackathonBuilder {
     }
 
     @Override
-    public IHackathonBuilder buildOrganizer(StaffProfile organizer) {
-        this.organizer = organizer;
+    public IHackathonBuilder buildOrganizer(Long organizerId) {
+        this.organizerId = organizerId;
         return this;
     }
 
     @Override
-    public IHackathonBuilder buildJudge(StaffProfile judge) {
-        this.judge = judge;
+    public IHackathonBuilder buildJudge(Long judgeId) {
+        this.judgeId = judgeId;
         return this;
     }
 
     @Override
-    public IHackathonBuilder buildMentors(List<StaffProfile> mentors) {
-        this.mentors = mentors != null ? mentors : new ArrayList<>();
+    public IHackathonBuilder buildMentors(List<Long> mentorsId) {
+        this.mentorsId = mentorsId != null ? mentorsId : new ArrayList<>();
         return this;
     }
 
@@ -125,18 +127,17 @@ public class HackathonBuilder implements IHackathonBuilder {
 
     @Override
     public Hackathon build() {
-
         Hackathon hackathon = new Hackathon(
                 name,
                 type,
+                location,
                 prize,
                 maxTeamSize,
                 regulation,
-                organizer,
-                judge,
-                mentors,
+                organizerId,
+                judgeId,
+                mentorsId,
                 delivery,
-                location,
                 rankingPolicy,
                 subscriptionDates,
                 dates
