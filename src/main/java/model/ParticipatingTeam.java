@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import model.enums.PayoutMethod;
+import model.valueobjs.PayoutAccountRef;
 import model.valueobjs.Penalty;
 
 import java.time.LocalDateTime;
@@ -39,6 +41,12 @@ public class ParticipatingTeam {
     @Column(name = "user_id", nullable = false)
     private List<Long> activeMembers = new ArrayList<>();
 
+    @Column(name = "contact_email", nullable = false)
+    private String contactEmail;
+
+    @Embedded
+    private PayoutAccountRef payoutAccountRef;
+
     @Column(name = "registered_at", nullable = false)
     private LocalDateTime registeredAt;
 
@@ -52,11 +60,21 @@ public class ParticipatingTeam {
     @Column(nullable = false)
     private boolean disqualified;
 
-    public ParticipatingTeam(Long hackathonId, Long teamId, List<Long> activeMembersId) {
+    public ParticipatingTeam(
+            Long hackathonId,
+            Long teamId,
+            List<Long> memberIdsSnapshot,
+            String contactEmail,
+            PayoutMethod payoutMethod,
+            String payoutRef,
+            LocalDateTime now
+    ) {
         this.hackathon = hackathonId;
         this.team = teamId;
-        this.activeMembers = new ArrayList<>(activeMembersId);
-        this.registeredAt = LocalDateTime.now();
+        this.activeMembers = new ArrayList<>(memberIdsSnapshot);
+        this.contactEmail = contactEmail;
+        this.payoutAccountRef = new PayoutAccountRef(payoutMethod, payoutRef);
+        this.registeredAt = now;
         this.disqualified = false;
     }
 
@@ -70,4 +88,21 @@ public class ParticipatingTeam {
         this.disqualified = true;
     }
 
+    public boolean isDisqualified() {
+        return this.disqualified;
+    }
+
+    public int getTotalPenaltyPoints() {
+        return this.penalties.stream()
+                .mapToInt(Penalty::getPoints)
+                .sum();
+    }
+
+    public int getTeamSize() {
+        return this.activeMembers.size();
+    }
+
+    public PayoutAccountRef getPaymentAccountRef() {
+        return this.payoutAccountRef;
+    }
 }

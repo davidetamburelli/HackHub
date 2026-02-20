@@ -5,9 +5,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import model.enums.HackathonStatus;
+import model.enums.PrizeStatus;
 import model.enums.RankingPolicy;
 import model.valueobjs.Period;
+import model.valueobjs.PrizePayout;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +81,12 @@ public class Hackathon {
     @Column(nullable = false)
     private HackathonStatus status;
 
+    @Column(name = "winner_participating_team_id")
+    private Long winnerParticipatingTeam;
+
+    @Embedded
+    private PrizePayout prizePayout;
+
     public Hackathon(
             String name,
             String type,
@@ -106,5 +115,30 @@ public class Hackathon {
         this.rankingPolicy = rankingPolicy;
         this.subscriptionDates = subscriptionDates;
         this.dates = dates;
+    }
+
+    public void close() {
+        this.status = HackathonStatus.CLOSED;
+    }
+
+    public void declareWinner(Long winnerParticipatingTeamId) {
+        this.winnerParticipatingTeam = winnerParticipatingTeamId;
+        this.prizePayout = new PrizePayout(PrizeStatus.NOT_PAID, null, null, null);
+    }
+
+    public Long getWinnerParticipatingTeamId() {
+        return this.winnerParticipatingTeam;
+    }
+
+    public PrizeStatus getPrizeStatus() {
+        return this.prizePayout != null ? this.prizePayout.getStatus() : null;
+    }
+
+    public void confirmPrizePaid(String providerRef, LocalDateTime paidAt) {
+        this.prizePayout = new PrizePayout(PrizeStatus.PAID, paidAt, providerRef, null);
+    }
+
+    public void markPrizeFailed(String failureReason, LocalDateTime paidAt) {
+        this.prizePayout = new PrizePayout(PrizeStatus.FAILED, paidAt, null, failureReason);
     }
 }
