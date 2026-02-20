@@ -25,7 +25,11 @@ public class InvitationHandler {
     }
 
     public User searchUser(String username) {
-        return userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new DomainException("Utente non trovato");
+        }
+        return user;
     }
 
     public void inviteUser(Long inviterUserId, Long inviteeUserId) {
@@ -33,28 +37,23 @@ public class InvitationHandler {
         try {
             tx.begin();
 
-            User inviter = userRepository.getById(inviterUserId);
-            User invitee = userRepository.getById(inviteeUserId);
-
-            if (inviter == null) throw new DomainException("Utente invitante non trovato");
-            if (invitee == null) throw new DomainException("Utente da invitare non trovato");
-
-            Team team = teamRepository.findByMemberId(inviter.getId());
-            if (team == null) throw new DomainException("Devi appartenere a un team per invitare qualcuno.");
-
-            if (!team.getLeader().equals(inviter.getId())) {
-                throw new DomainException("Solo il leader può invitare nuovi membri.");
+            Team inviterTeam = teamRepository.findByLeaderId(inviterUserId);
+            if (inviterTeam == null) {
+                throw new DomainException("Operazione negata: non sei il leader di nessun team.");
             }
 
-            if (invitee.getTeam() != null) {
-                throw new DomainException("L'utente " + invitee.getUsername() + " fa già parte di un team.");
+            Team inviteeTeam = teamRepository.findByMemberId(inviteeUserId);
+            if (inviteeTeam != null) {
+                throw new DomainException("Impossibile invitare: l'utente fa già parte di un team.");
             }
 
-            if (invitationRepository.existsPendingByTeamIdAndInviteeId(team.getId(), invitee.getId())) {
+            boolean existingInvitation = invitationRepository.existsPendingByTeamIdAndInviteeId(inviterTeam.getId(), inviteeUserId);
+            if (existingInvitation) {
                 throw new DomainException("Esiste già un invito in attesa per questo utente.");
             }
 
-            Invitation invitation = new Invitation(team.getId(), invitee.getId());
+            Invitation invitation = new Invitation(inviterTeam.getId(), inviteeUserId);
+
             invitationRepository.save(invitation);
 
             tx.commit();
