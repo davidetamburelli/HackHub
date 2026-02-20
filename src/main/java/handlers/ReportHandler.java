@@ -2,16 +2,15 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import model.Hackathon;
-import model.ParticipatingTeam;
 import model.Report;
-import model.StaffProfile;
 import model.dto.CreateReportDTO;
 import repository.HackathonRepository;
 import repository.ParticipatingTeamRepository;
 import repository.ReportRepository;
 import repository.StaffProfileRepository;
 import validators.ReportValidator;
+
+import java.time.LocalDateTime;
 
 public class ReportHandler {
 
@@ -47,16 +46,13 @@ public class ReportHandler {
 
             reportValidator.validate(createReportDTO, staffProfileId, hackathonId, participatingTeamId);
 
-            Hackathon hackathon = hackathonRepository.getById(hackathonId);
-            StaffProfile mentor = staffProfileRepository.getById(staffProfileId);
-            ParticipatingTeam team = participatingTeamRepository.getById(participatingTeamId);
-
             Report report = new Report(
-                    hackathon,
-                    mentor,
-                    team,
+                    hackathonId,
+                    staffProfileId,
+                    participatingTeamId,
                     createReportDTO.getReason(),
-                    createReportDTO.getUrgency()
+                    createReportDTO.getUrgency(),
+                    LocalDateTime.now()
             );
 
             reportRepository.save(report);

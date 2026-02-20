@@ -7,13 +7,11 @@ import model.ParticipatingTeam;
 import model.StaffProfile;
 import model.Submission;
 import model.Team;
-import model.User;
 import model.dto.AddSubmissionDTO;
 import repository.*;
 import utils.DomainException;
 import validators.SubmissionValidator;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class SubmissionHandler {
@@ -55,15 +53,13 @@ public class SubmissionHandler {
 
             submissionValidator.validate(dto, userId, hackathonId);
 
-            Hackathon hackathon = hackathonRepository.getById(hackathonId);
-            User user = userRepository.getById(userId);
-            Team team = teamRepository.findByMemberId(user.getId());
-            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathon.getId(), team.getId());
+            Team team = teamRepository.findByMemberId(userId);
+            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathonId, team.getId());
 
             Submission submission = new Submission(
-                    hackathon,
-                    pt,
-                    dto.getResponse(), 
+                    hackathonId,
+                    pt.getId(),
+                    dto.getResponse(),
                     dto.getResponseURL()
             );
 
@@ -84,7 +80,11 @@ public class SubmissionHandler {
         StaffProfile staff = staffProfileRepository.getById(staffProfileId);
         if (staff == null) throw new DomainException("Profilo staff non trovato");
 
-        hackathon.assertStaff(staff);
+        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
+                hackathon.getJudge().equals(staffProfileId) ||
+                hackathon.getMentors().contains(staffProfileId);
+
+        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
 
         return submissionRepository.findByHackathonId(hackathonId);
     }
@@ -97,12 +97,18 @@ public class SubmissionHandler {
         StaffProfile staff = staffProfileRepository.getById(staffProfileId);
         if (staff == null) throw new DomainException("Profilo staff non trovato");
 
-        hackathon.assertStaff(staff);
+        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
+                hackathon.getJudge().equals(staffProfileId) ||
+                hackathon.getMentors().contains(staffProfileId);
+
+        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
 
         Submission submission = submissionRepository.getById(submissionId);
         if (submission == null) throw new DomainException("Sottomissione non trovata");
 
-        submission.assertBelongsToHackathon(hackathon);
+        if (!submission.getHackathon().equals(hackathonId)) {
+            throw new DomainException("La sottomissione non appartiene all'hackathon selezionato");
+        }
 
         return submission;
     }

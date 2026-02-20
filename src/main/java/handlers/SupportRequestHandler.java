@@ -13,6 +13,7 @@ import repository.*;
 import utils.DomainException;
 import validators.SupportRequestValidator;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SupportRequestHandler {
@@ -52,18 +53,16 @@ public class SupportRequestHandler {
 
             supportRequestValidator.validate(dto, userId, hackathonId);
 
-            Hackathon hackathon = hackathonRepository.getById(hackathonId);
-            User user = userRepository.getById(userId);
-            Team team = teamRepository.findByMemberId(user.getId());
-            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathon.getId(), team.getId());
+            Team team = teamRepository.findByMemberId(userId);
+            ParticipatingTeam pt = participatingTeamRepository.findByHackathonIdAndTeamId(hackathonId, team.getId());
 
             SupportRequest request = new SupportRequest(
-                    hackathon,
-                    pt,
+                    hackathonId,
+                    pt.getId(),
                     dto.getTitle(),
                     dto.getDescription(),
                     dto.getUrgency(),
-                    null
+                    LocalDateTime.now()
             );
 
             supportRequestRepository.save(request);
@@ -84,7 +83,11 @@ public class SupportRequestHandler {
         StaffProfile staff = staffProfileRepository.getById(staffProfileId);
         if (staff == null) throw new DomainException("Profilo staff non trovato");
 
-        hackathon.assertStaff(staff);
+        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
+                hackathon.getJudge().equals(staffProfileId) ||
+                hackathon.getMentors().contains(staffProfileId);
+
+        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
 
         return supportRequestRepository.getByHackathonId(hackathonId);
     }
@@ -97,12 +100,18 @@ public class SupportRequestHandler {
         StaffProfile staff = staffProfileRepository.getById(staffProfileId);
         if (staff == null) throw new DomainException("Profilo staff non trovato");
 
-        hackathon.assertStaff(staff);
+        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
+                hackathon.getJudge().equals(staffProfileId) ||
+                hackathon.getMentors().contains(staffProfileId);
+
+        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
 
         SupportRequest request = supportRequestRepository.getById(supportRequestId);
         if (request == null) throw new DomainException("Richiesta di supporto non trovata");
 
-        request.assertBelongsToHackathon(hackathon);
+        if (!request.getHackathon().equals(hackathonId)) {
+            throw new DomainException("La richiesta di supporto non appartiene all'hackathon specificato");
+        }
 
         return request;
     }

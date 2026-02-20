@@ -34,11 +34,11 @@ public class TeamHandler {
 
             User leader = userRepository.getById(userId);
 
-            Team team = new Team(dto.getName(), leader);
+            Team team = new Team(dto.getName(), userId);
 
             teamRepository.save(team);
 
-            team.addMember(leader);
+            leader.assignTeam(team.getId());
 
             userRepository.save(leader);
 
