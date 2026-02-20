@@ -20,7 +20,7 @@ public class TeamRepository extends AbstractRepository<Team> {
     }
 
     public boolean existsByMemberId(Long userId) {
-        String jpql = "SELECT COUNT(t) FROM Team t JOIN t.members m WHERE m.id = :userId";
+        String jpql = "SELECT COUNT(t) FROM Team t WHERE :userId MEMBER OF t.members";
         Long count = em.createQuery(jpql, Long.class)
                 .setParameter("userId", userId)
                 .getSingleResult();
@@ -29,7 +29,7 @@ public class TeamRepository extends AbstractRepository<Team> {
 
     public Team findByMemberId(Long userId) {
         try {
-            String jpql = "SELECT t FROM Team t JOIN t.members m WHERE m.id = :userId";
+            String jpql = "SELECT t FROM Team t WHERE :userId MEMBER OF t.members";
             TypedQuery<Team> query = em.createQuery(jpql, Team.class);
             query.setParameter("userId", userId);
 
@@ -41,7 +41,7 @@ public class TeamRepository extends AbstractRepository<Team> {
 
     public Team findByLeaderId(Long userId) {
         try {
-            String jpql = "SELECT t FROM Team t WHERE t.leader.id = :userId";
+            String jpql = "SELECT t FROM Team t WHERE t.leader = :userId";
             TypedQuery<Team> query = em.createQuery(jpql, Team.class);
             query.setParameter("userId", userId);
 

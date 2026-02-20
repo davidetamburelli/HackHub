@@ -13,8 +13,7 @@ public class UserRepository extends AbstractRepository<User> {
 
     public User findByUsername(String username) {
         try {
-
-            String jpql = "SELECT u FROM User u WHERE u.username.value = :username";
+            String jpql = "SELECT u FROM User u WHERE u.username = :username";
 
             TypedQuery<User> query = em.createQuery(jpql, User.class);
             query.setParameter("username", username);

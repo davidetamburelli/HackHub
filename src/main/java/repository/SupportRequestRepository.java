@@ -14,7 +14,7 @@ public class SupportRequestRepository extends AbstractRepository<SupportRequest>
     }
 
     public List<SupportRequest> getByHackathonId(Long hackathonId) {
-        String jpql = "SELECT s FROM SupportRequest s WHERE s.hackathon.id = :hackathonId";
+        String jpql = "SELECT s FROM SupportRequest s WHERE s.hackathon = :hackathonId";
 
         TypedQuery<SupportRequest> query = em.createQuery(jpql, SupportRequest.class);
         query.setParameter("hackathonId", hackathonId);
@@ -25,7 +25,7 @@ public class SupportRequestRepository extends AbstractRepository<SupportRequest>
     public SupportRequest getByIdAndHackathonId(Long supportRequestId, Long hackathonId) {
         try {
             String jpql = "SELECT s FROM SupportRequest s " +
-                    "WHERE s.id = :supportRequestId AND s.hackathon.id = :hackathonId";
+                    "WHERE s.id = :supportRequestId AND s.hackathon = :hackathonId";
 
             TypedQuery<SupportRequest> query = em.createQuery(jpql, SupportRequest.class);
             query.setParameter("supportRequestId", supportRequestId);
