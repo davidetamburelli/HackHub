@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import model.enums.SupportRequestStatus;
 import model.enums.Urgency;
+import model.valueobjs.SupportCallBooking;
 import model.valueobjs.SupportReply;
 
 import java.time.LocalDateTime;
@@ -46,6 +47,9 @@ public class SupportRequest {
     @Embedded
     private SupportReply reply;
 
+    @Embedded
+    private SupportCallBooking callBooking;
+
     public SupportRequest(
             Long hackathonId,
             Long participatingTeamId,
@@ -63,7 +67,28 @@ public class SupportRequest {
         this.status = SupportRequestStatus.OPEN;
     }
 
+    public boolean isOpen() {
+        return this.status == SupportRequestStatus.OPEN;
+    }
+
     public void addReply(Long mentorId, String message, LocalDateTime answeredAt) {
         this.reply = new SupportReply(mentorId, message, answeredAt);
+    }
+
+    public void scheduleCall(
+            Long staffProfileId,
+            LocalDateTime startsAt,
+            java.time.Duration duration,
+            String eventId,
+            String meetingURL
+    ) {
+        this.callBooking = new SupportCallBooking(
+                staffProfileId,
+                startsAt,
+                duration,
+                eventId,
+                meetingURL,
+                LocalDateTime.now()
+        );
     }
 }
