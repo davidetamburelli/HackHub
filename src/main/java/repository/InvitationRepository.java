@@ -6,6 +6,8 @@ import jakarta.persistence.TypedQuery;
 import model.Invitation;
 import model.enums.InvitationStatus;
 
+import java.util.List;
+
 public class InvitationRepository extends AbstractRepository<Invitation> {
 
     public InvitationRepository(EntityManager em) {
@@ -38,6 +40,31 @@ public class InvitationRepository extends AbstractRepository<Invitation> {
             query.setParameter("invitationId", invitationId);
             query.setParameter("userId", userId);
             query.setParameter("status", status);
+
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    public List<Invitation> findByInviteeId(Long userId) {
+        String jpql = "SELECT i FROM Invitation i WHERE i.invitee = :userId";
+
+        TypedQuery<Invitation> query = em.createQuery(jpql, Invitation.class);
+        query.setParameter("userId", userId);
+
+        return query.getResultList();
+    }
+
+    public Invitation getByIdAndInviteeId(Long invitationId, Long userId) {
+        try {
+            String jpql = "SELECT i FROM Invitation i " +
+                    "WHERE i.id = :invitationId " +
+                    "AND i.invitee = :userId";
+
+            TypedQuery<Invitation> query = em.createQuery(jpql, Invitation.class);
+            query.setParameter("invitationId", invitationId);
+            query.setParameter("userId", userId);
 
             return query.getSingleResult();
         } catch (NoResultException e) {

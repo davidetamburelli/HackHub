@@ -68,7 +68,7 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
         return em.createQuery(cq).getResultList();
     }
 
-    public HackathonStatus findStatusById(Long hackathonId) {
+    public HackathonStatus findStatusByHackathonId(Long hackathonId) {
         try {
             String jpql = "SELECT h.status FROM Hackathon h WHERE h.id = :id";
             return em.createQuery(jpql, HackathonStatus.class)
@@ -77,6 +77,18 @@ public class HackathonRepository extends AbstractRepository<Hackathon> {
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    public boolean existsOrganizer(Long hackathonId, Long staffProfileId) {
+        String jpql = "SELECT COUNT(h) FROM Hackathon h " +
+                "WHERE h.id = :hackathonId AND h.organizer = :staffId";
+
+        Long count = em.createQuery(jpql, Long.class)
+                .setParameter("hackathonId", hackathonId)
+                .setParameter("staffId", staffProfileId)
+                .getSingleResult();
+
+        return count > 0;
     }
 
     public boolean existsMentor(Long hackathonId, Long staffProfileId) {

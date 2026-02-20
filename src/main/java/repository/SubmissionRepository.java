@@ -58,4 +58,14 @@ public class SubmissionRepository extends AbstractRepository<Submission> {
             return null;
         }
     }
+
+    public boolean existsByHackathonIdAndEvaluationIsNull(Long hackathonId) {
+        String jpql = "SELECT COUNT(s) FROM Submission s WHERE s.hackathon = :hackathonId AND s.evaluation IS NULL";
+
+        Long count = em.createQuery(jpql, Long.class)
+                .setParameter("hackathonId", hackathonId)
+                .getSingleResult();
+
+        return count > 0;
+    }
 }
