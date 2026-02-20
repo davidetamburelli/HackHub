@@ -34,7 +34,8 @@ public class ReportHandler {
         this.reportValidator = new ReportValidator(
                 staffProfileRepository,
                 hackathonRepository,
-                participatingTeamRepository
+                participatingTeamRepository,
+                reportRepository
         );
     }
 

@@ -1,6 +1,7 @@
 package validators;
 
 import model.dto.CreateHackathonDTO;
+import model.dto.HackathonSearchCriteria;
 import model.valueobjs.Period;
 import repository.HackathonRepository;
 import repository.StaffProfileRepository;
@@ -59,6 +60,18 @@ public class HackathonValidator {
         }
 
         validateDates(dto.getSubscriptionDates(), dto.getDates());
+    }
+
+    public void validate(HackathonSearchCriteria s) {
+        if (s == null) {
+            throw new IllegalArgumentException("I criteri di ricerca non possono essere nulli");
+        }
+
+        if (s.startsAfter() != null && s.startsBefore() != null) {
+            if (s.startsAfter().isAfter(s.startsBefore())) {
+                throw new IllegalArgumentException("La data 'inizia dopo' non può essere successiva alla data 'inizia prima'");
+            }
+        }
     }
 
     private void validateDates(Period sub, Period hack) {
