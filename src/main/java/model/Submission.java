@@ -55,4 +55,13 @@ public class Submission {
     public boolean hasEvaluation() {
         return this.evaluation != null;
     }
+
+    public int getScore() {
+        return this.evaluation.getScore();
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return this.updatedAt;
+    }
+
 }
