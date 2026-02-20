@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import model.valueobjs.Penalty;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,10 +42,32 @@ public class ParticipatingTeam {
     @Column(name = "registered_at", nullable = false)
     private LocalDateTime registeredAt;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "pt_penalties",
+            joinColumns = @JoinColumn(name = "participating_team_id")
+    )
+    private List<Penalty> penalties = new ArrayList<>();
+
+    @Column(nullable = false)
+    private boolean disqualified;
+
     public ParticipatingTeam(Long hackathonId, Long teamId, List<Long> activeMembersId) {
         this.hackathon = hackathonId;
         this.team = teamId;
         this.activeMembers = new ArrayList<>(activeMembersId);
         this.registeredAt = LocalDateTime.now();
+        this.disqualified = false;
     }
+
+    public Penalty applyPenalty(int points, String reason, Long reportId) {
+        Penalty penalty = new Penalty(points, reason, LocalDateTime.now(), reportId);
+        this.penalties.add(penalty);
+        return penalty;
+    }
+
+    public void disqualify() {
+        this.disqualified = true;
+    }
+
 }

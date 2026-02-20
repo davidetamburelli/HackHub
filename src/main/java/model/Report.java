@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import model.enums.ReportResolution;
 import model.enums.Urgency;
 
 import java.time.LocalDateTime;
@@ -25,7 +26,7 @@ public class Report {
     private Long mentor;
 
     @Column(name = "participating_team_id", nullable = false)
-    private Long partecipatingTeam;
+    private Long participatingTeam;
 
     @Column(nullable = false, length = 500)
     private String reason;
@@ -37,6 +38,13 @@ public class Report {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private boolean resolved;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "report_resolution")
+    private ReportResolution reportResolution;
+
     public Report(
             Long hackathonId,
             Long mentorId,
@@ -47,9 +55,23 @@ public class Report {
     ) {
         this.hackathon = hackathonId;
         this.mentor = mentorId;
-        this.partecipatingTeam = participatingTeamId;
+        this.participatingTeam = participatingTeamId;
         this.reason = reason;
         this.urgency = urgency;
         this.createdAt = createdAt;
+        this.resolved = false;
+    }
+
+    public boolean isResolved() {
+        return this.resolved;
+    }
+
+    public void resolve(ReportResolution resolution) {
+        this.reportResolution = resolution;
+        this.resolved = true;
+    }
+
+    public void archive() {
+        this.resolved = true;
     }
 }
