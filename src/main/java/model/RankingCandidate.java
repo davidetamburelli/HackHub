@@ -29,6 +29,9 @@ public class RankingCandidate {
     @Column(name = "team_registered_at", nullable = false)
     private LocalDateTime teamRegisteredAt;
 
+    @Column(name = "team_size", nullable = false)
+    private int teamSize;
+
     public RankingCandidate(
             Long eligibleParticipatingTeamId,
             int finalScore,
