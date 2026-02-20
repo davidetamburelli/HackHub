@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import model.enums.SupportRequestStatus;
 import model.enums.Urgency;
+import model.valueobjs.SupportReply;
 
 import java.time.LocalDateTime;
 
@@ -42,21 +43,27 @@ public class SupportRequest {
     @Column(nullable = false, length = 30)
     private SupportRequestStatus status;
 
+    @Embedded
+    private SupportReply reply;
+
     public SupportRequest(
             Long hackathonId,
-            Long partecipatingTeamId,
+            Long participatingTeamId,
             String title,
             String description,
             Urgency urgency,
             LocalDateTime createdAt
     ) {
         this.hackathon = hackathonId;
-        this.participatingTeam = partecipatingTeamId;
+        this.participatingTeam = participatingTeamId;
         this.title = title;
         this.description = description;
         this.urgency = urgency;
         this.createdAt = createdAt;
-
         this.status = SupportRequestStatus.OPEN;
+    }
+
+    public void addReply(Long mentorId, String message, LocalDateTime answeredAt) {
+        this.reply = new SupportReply(mentorId, message, answeredAt);
     }
 }
