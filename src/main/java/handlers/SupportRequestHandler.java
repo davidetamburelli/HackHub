@@ -42,7 +42,9 @@ public class SupportRequestHandler {
                 userRepository,
                 teamRepository,
                 hackathonRepository,
-                participatingTeamRepository
+                participatingTeamRepository,
+                supportRequestRepository,
+                staffProfileRepository
         );
     }
 
