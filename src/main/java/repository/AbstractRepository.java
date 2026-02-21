@@ -23,7 +23,12 @@ public abstract class AbstractRepository<T> implements IRepository<T> {
     @Override
     public void save(T item) {
         if (item != null) {
-            em.merge(item);
+            Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(item);
+            if (id == null) {
+                em.persist(item);
+            } else {
+                em.merge(item);
+            }
         }
     }
 

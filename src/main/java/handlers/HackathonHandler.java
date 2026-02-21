@@ -95,6 +95,8 @@ public class HackathonHandler {
                 .buildRankingPolicy(createHackathonDTO.getRankingPolicy())
                 .build();
 
+        createdHackathon.setStatus(HackathonStatus.IN_REGISTRATION);
+
         hackathonRepository.save(createdHackathon);
     }
 

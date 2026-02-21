@@ -115,6 +115,8 @@ public class Hackathon {
         this.rankingPolicy = rankingPolicy;
         this.subscriptionDates = subscriptionDates;
         this.dates = dates;
+        this.status = HackathonStatus.CREATED;
+        this.prizePayout = new PrizePayout(PrizeStatus.NOT_PAID, null, null, null);
     }
 
     public void close() {
@@ -140,6 +142,10 @@ public class Hackathon {
 
     public void markPrizeFailed(String failureReason, LocalDateTime paidAt) {
         this.prizePayout = new PrizePayout(PrizeStatus.FAILED, paidAt, null, failureReason);
+    }
+
+    public void setStatus(HackathonStatus status) {
+        this.status = status;
     }
 
     public void closeEvaluations() {
