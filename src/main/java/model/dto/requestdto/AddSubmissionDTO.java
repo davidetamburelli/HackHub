@@ -1,5 +1,7 @@
 package model.dto.requestdto;
 
+import jakarta.validation.constraints.NotBlank;
+import org.hibernate.validator.constraints.URL;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +13,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AddSubmissionDTO {
 
+    @NotBlank(message = "La descrizione del progetto è obbligatoria")
     private String response;
+
+    @NotBlank(message = "L'URL del repository/progetto è obbligatorio")
+    @URL(message = "L'URL fornito non è in un formato valido (es. https://...)")
     private String responseURL;
 
 }
