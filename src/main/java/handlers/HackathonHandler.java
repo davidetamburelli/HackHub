@@ -1,5 +1,6 @@
 package handlers;
 
+import model.dto.requestdto.HackathonSearchCriteria;
 import utils.builders.HackathonBuilder;
 import utils.builders.IHackathonBuilder;
 import jakarta.persistence.EntityManager;
@@ -239,6 +240,16 @@ public class HackathonHandler {
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
+        }
+    }
+
+    public List<Hackathon> searchHackathon(HackathonSearchCriteria hackathonSearchCriteria) {
+        hackathonValidator.validate(hackathonSearchCriteria);
+        if(hackathonSearchCriteria!=null) {
+            return hackathonRepository.search(hackathonSearchCriteria);
+        }
+        else {
+            return hackathonRepository.findAll();
         }
     }
 }
