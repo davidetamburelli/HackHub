@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import model.ParticipatingTeam;
 import model.Report;
+import model.SupportRequest;
 import model.dto.requestdto.ApplySanctionDTO;
 import model.dto.requestdto.CreateReportDTO;
 import model.enums.HackathonStatus;
@@ -16,6 +17,7 @@ import utils.DomainException;
 import validators.ReportValidator;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ReportHandler {
 
@@ -71,6 +73,24 @@ public class ReportHandler {
             if (tx.isActive()) tx.rollback();
             throw e;
         }
+    }
+
+    public List<Report> getReports(Long staffProfileId, Long hackathonId) {
+        boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        if (!isOrganizer) throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
+
+        return reportRepository.getByHackathonId(hackathonId);
+    }
+
+    public Report getReportDetails(Long staffProfileId, Long hackathonId, Long reportId) {
+        boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        if (!isOrganizer) throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
+
+        Report report = reportRepository.getByIdAndHackathonId(reportId, hackathonId);
+        if (report == null)
+            throw new DomainException("La segnalazione non appartiene all'hackathon selezionato");
+
+        return report;
     }
 
     public void applySanction(Long staffProfileId, Long hackathonId, Long reportId, ApplySanctionDTO applySanctionDTO) {

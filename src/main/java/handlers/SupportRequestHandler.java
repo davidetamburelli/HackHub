@@ -2,10 +2,7 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import model.Hackathon;
-import model.ParticipatingTeam;
-import model.StaffProfile;
-import model.SupportRequest;
+import model.*;
 import model.dto.CallBookingRequest;
 import model.dto.requestdto.BookSupportCallDTO;
 import model.dto.requestdto.CallBookingResult;
@@ -66,6 +63,25 @@ public class SupportRequestHandler {
             if (tx.isActive()) tx.rollback();
             throw e;
         }
+    }
+
+    public List<SupportRequest> getSupportRequests(Long staffProfileId, Long hackathonId) {
+        boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        if (!isMentor) throw new DomainException("Operazione non autorizzata: non sei un mentore dell'hackathon");
+
+        List<SupportRequest> supportRequests = supportRequestRepository.getByHackathonId(hackathonId);
+        return supportRequests;
+    }
+
+    public SupportRequest getSupportRequestDetails(Long staffProfileId, Long hackathonId, Long supportRequestId) {
+        boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        if (!isMentor) throw new DomainException("Operazione non autorizzata: non sei un mentore dell'hackathon");
+
+        SupportRequest supportRequest = supportRequestRepository.getByIdAndHackathonId(supportRequestId, hackathonId);
+        if (supportRequest == null)
+            throw new DomainException("La richiesta di supporto non appartiene all'hackathon selezionato");
+
+        return supportRequest;
     }
 
     public void replyToSupportRequest(Long staffProfileId, Long hackathonId, Long supportRequestId, ReplySupportRequestDTO dto) {

@@ -2,14 +2,14 @@ package handlers;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-import model.Invitation;
-import model.Team;
-import model.User;
+import model.*;
 import model.enums.InvitationStatus;
 import repository.InvitationRepository;
 import repository.TeamRepository;
 import repository.UserRepository;
 import utils.DomainException;
+
+import java.util.List;
 
 public class InvitationHandler {
 
@@ -63,6 +63,15 @@ public class InvitationHandler {
             if (tx.isActive()) tx.rollback();
             throw e;
         }
+    }
+
+    public List<Invitation> getInvitationsList(Long userId) {
+        return invitationRepository.findByInviteeId(userId);
+    }
+
+    public Invitation getInvitationDetails(Long userId, Long invitationId) {
+        //TODO qua dovrebbe restituire info anche sul team, quindi fare getTeamId su invitation e creare un DTO di risposta
+        return invitationRepository.getByIdAndInviteeId(invitationId, userId);
     }
 
     public void acceptInvitation(Long userId, Long invitationId) {
