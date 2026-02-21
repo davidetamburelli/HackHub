@@ -16,7 +16,6 @@ public class EvaluationHandler {
 
     private final EntityManager em;
 
-    private final StaffProfileRepository staffProfileRepository;
     private final HackathonRepository hackathonRepository;
     private final SubmissionRepository submissionRepository;
 
@@ -24,7 +23,6 @@ public class EvaluationHandler {
 
     public EvaluationHandler(EntityManager em) {
         this.em = em;
-        this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
         this.submissionRepository = new SubmissionRepository(em);
         this.evaluationValidator = new EvaluationValidator();

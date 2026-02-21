@@ -5,6 +5,7 @@ import jakarta.persistence.EntityTransaction;
 import model.Invitation;
 import model.Team;
 import model.User;
+import model.enums.InvitationStatus;
 import repository.InvitationRepository;
 import repository.TeamRepository;
 import repository.UserRepository;
@@ -49,7 +50,7 @@ public class InvitationHandler {
 
             boolean existingInvitation = invitationRepository.existsPendingByTeamIdAndInviteeId(inviterTeam.getId(), inviteeUserId);
             if (existingInvitation) {
-                throw new DomainException("Esiste già un invito pendente per questo utente");
+                throw new DomainException("Esiste già un invito in attesa di risposta per questo utente");
             }
 
             Invitation createdInvitation = new Invitation(inviterTeam.getId(), inviteeUserId);
@@ -68,23 +69,22 @@ public class InvitationHandler {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
+            Invitation invitation = invitationRepository.findByIdAndInviteeIdAndStatus(invitationId, userId, InvitationStatus.PENDING);
 
-            User user = userRepository.getById(userId);
-            Invitation invitation = invitationRepository.getById(invitationId);
-
-            if (user == null || invitation == null) {
-                throw new DomainException("Invito o Utente non trovati");
+            if (invitation == null) {
+                throw new DomainException("Non è stato trovato l'invito selezionato per questo utente");
             }
 
-            if (!invitation.getInvitee().equals(userId)) {
-                throw new DomainException("Operazione non autorizzata: l'invito non è rivolto a te");
+            boolean userHasTeam = teamRepository.existsByMemberId(userId);
+            if(userHasTeam) {
+                throw new DomainException("L'utente appartiene già a un team");
             }
 
-            invitation.accept();
-
+            User user = userRepository.getById(invitation.getInvitee());
             Team team = teamRepository.getById(invitation.getTeamId());
             team.addMember(userId);
             user.assignTeam(team.getId());
+            invitation.accept();
 
             invitationRepository.save(invitation);
             teamRepository.save(team);
@@ -102,15 +102,10 @@ public class InvitationHandler {
         try {
             tx.begin();
 
-            User user = userRepository.getById(userId);
-            Invitation invitation = invitationRepository.getById(invitationId);
+            Invitation invitation = invitationRepository.findByIdAndInviteeIdAndStatus(invitationId, userId, InvitationStatus.PENDING);
 
-            if (user == null || invitation == null) {
-                throw new DomainException("Invito o Utente non trovati");
-            }
-
-            if (!invitation.getInvitee().equals(userId)) {
-                throw new DomainException("Operazione non autorizzata: l'invito non è rivolto a te");
+            if (invitation == null) {
+                throw new DomainException("Non è stato trovato l'invito selezionato per questo utente");
             }
 
             invitation.reject();

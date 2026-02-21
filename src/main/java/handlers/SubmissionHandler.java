@@ -76,40 +76,21 @@ public class SubmissionHandler {
     }
 
     public List<Submission> getSubmissionsList(Long staffProfileId, Long hackathonId) {
-        Hackathon hackathon = hackathonRepository.getById(hackathonId);
-        if (hackathon == null) throw new DomainException("Hackathon non trovato");
-
-        StaffProfile staff = staffProfileRepository.getById(staffProfileId);
-        if (staff == null) throw new DomainException("Profilo staff non trovato");
-
-        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
-                hackathon.getJudge().equals(staffProfileId) ||
-                hackathon.getMentors().contains(staffProfileId);
-
+        boolean isStaff = hackathonRepository.existsStaff(hackathonId, staffProfileId);
         if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
-
         return submissionRepository.findByHackathonId(hackathonId);
     }
 
     public Submission getSubmissionDetails(Long staffProfileId, Long hackathonId, Long submissionId) {
+        boolean isStaff = hackathonRepository.existsStaff(hackathonId, staffProfileId);
+        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
+
         Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) throw new DomainException("Hackathon non trovato");
 
-        StaffProfile staff = staffProfileRepository.getById(staffProfileId);
-        if (staff == null) throw new DomainException("Profilo staff non trovato");
-
-        boolean isStaff = hackathon.getOrganizer().equals(staffProfileId) ||
-                hackathon.getJudge().equals(staffProfileId) ||
-                hackathon.getMentors().contains(staffProfileId);
-
-        if (!isStaff) throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
-
-        Submission submission = submissionRepository.getById(submissionId);
-        if (submission == null) throw new DomainException("Sottomissione non trovata");
-
-        if (!submission.getHackathon().equals(hackathonId)) {
+        Submission submission = submissionRepository.getByIdAndHackathonId(submissionId, hackathonId);
+        if (submission == null)
             throw new DomainException("La sottomissione non appartiene all'hackathon selezionato");
-        }
 
         return submission;
     }

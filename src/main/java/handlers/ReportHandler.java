@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 public class ReportHandler {
 
     private final EntityManager em;
-    private final StaffProfileRepository staffProfileRepository;
     private final HackathonRepository hackathonRepository;
     private final ParticipatingTeamRepository participatingTeamRepository;
     private final ReportRepository reportRepository;
@@ -28,7 +27,6 @@ public class ReportHandler {
 
     public ReportHandler(EntityManager em) {
         this.em = em;
-        this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
         this.reportRepository = new ReportRepository(em);

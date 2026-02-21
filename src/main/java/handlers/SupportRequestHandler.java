@@ -27,7 +27,6 @@ public class SupportRequestHandler {
     private final SupportRequestValidator supportRequestValidator;
     private final ParticipatingTeamRepository participatingTeamRepository;
     private final SupportRequestRepository supportRequestRepository;
-    private final StaffProfileRepository staffProfileRepository;
     private final HackathonRepository hackathonRepository;
     private final ICalendarService calendarService;
 
@@ -35,7 +34,6 @@ public class SupportRequestHandler {
         this.em = em;
         this.participatingTeamRepository = new ParticipatingTeamRepository(em);
         this.supportRequestRepository = new SupportRequestRepository(em);
-        this.staffProfileRepository = new StaffProfileRepository(em);
         this.hackathonRepository = new HackathonRepository(em);
         this.calendarService = calendarService;
         this.supportRequestValidator = new SupportRequestValidator();
@@ -93,7 +91,7 @@ public class SupportRequestHandler {
             }
 
             if (!supportRequest.isOpen()) {
-                throw new DomainException("La richiesta di supporto non è in attesa di risposta");
+                throw new DomainException("La richiesta di supporto è già stata risolta");
             }
 
             supportRequest.addReply(staffProfileId, dto.getMessage(), LocalDateTime.now());
@@ -125,7 +123,7 @@ public class SupportRequestHandler {
                 throw new DomainException("Richiesta di supporto non trovata");
             }
             if (!supportRequest.isOpen()) {
-                throw new DomainException("La richiesta di supporto non è più aperta");
+                throw new DomainException("La richiesta di supporto è già stata risolta");
             }
             Long participatingTeamId = supportRequest.getParticipatingTeam();
             ParticipatingTeam participatingTeam = participatingTeamRepository.getByIdAndHackathonId(participatingTeamId, hackathonId);
