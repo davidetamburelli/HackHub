@@ -1,6 +1,8 @@
 package handlers;
 
 import model.dto.requestdto.HackathonSearchCriteria;
+import model.dto.responsedto.HackathonSummaryDTO;
+import model.mappers.HackathonDTOMapper;
 import utils.builders.HackathonBuilder;
 import utils.builders.IHackathonBuilder;
 import model.Hackathon;
@@ -229,11 +231,17 @@ public class HackathonHandler {
         hackathonRepository.save(h);
     }
 
-    public List<Hackathon> searchHackathon(HackathonSearchCriteria hackathonSearchCriteria) {
+    public List<HackathonSummaryDTO> searchHackathon(HackathonSearchCriteria hackathonSearchCriteria) {
+        List<Hackathon> hackathons;
+
         if (hackathonSearchCriteria != null) {
-            return hackathonRepository.search(hackathonSearchCriteria);
+            hackathons = hackathonRepository.search(hackathonSearchCriteria);
         } else {
-            return hackathonRepository.findAll();
+            hackathons = hackathonRepository.findAll();
         }
+
+        return hackathons.stream()
+                .map(HackathonDTOMapper::toSummary)
+                .toList();
     }
 }

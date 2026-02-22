@@ -33,5 +33,4 @@ public class PublicHackathonViewDTO {
     private RankingPolicy rankingPolicy;
     private String delivery;
     private Long winnerParticipatingTeamId;
-
 }

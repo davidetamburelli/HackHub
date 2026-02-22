@@ -2,13 +2,13 @@ package model.dto.responsedto;
 
 import model.enums.HackathonStatus;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record HackathonSummaryDTO(
         Long id,
         String name,
         String type,
-        LocalDateTime startDate,
-        LocalDateTime endDate,
+        LocalDate startDate,
+        LocalDate endDate,
         HackathonStatus status
 ) {}

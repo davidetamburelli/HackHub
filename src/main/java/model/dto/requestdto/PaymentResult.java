@@ -28,4 +28,8 @@ public class PaymentResult {
         return this.failureReason;
     }
 
+    public boolean isSuccess() {
+        return success;
+    }
+
 }

@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Embeddable
 @Getter
+@Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Penalty {
 
@@ -31,4 +31,5 @@ public class Penalty {
         this.assignedAt = assignedAt;
         this.report = reportId;
     }
+
 }

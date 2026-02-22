@@ -19,4 +19,29 @@ public record HackathonSearchCriteria(
         }
         return startsAfter.isBefore(startsBefore) || startsAfter.isEqual(startsBefore);
     }
+
+    @Override
+    public String nameContains() {
+        return nameContains;
+    }
+
+    @Override
+    public HackathonStatus status() {
+        return status;
+    }
+
+    @Override
+    public Boolean isOnline() {
+        return isOnline;
+    }
+
+    @Override
+    public LocalDate startsBefore() {
+        return startsBefore;
+    }
+
+    @Override
+    public LocalDate startsAfter() {
+        return startsAfter;
+    }
 }

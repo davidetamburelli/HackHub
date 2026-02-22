@@ -36,5 +36,4 @@ public class Email {
 
         this.value = cleanEmail;
     }
-
 }

@@ -68,5 +68,4 @@ public class CreateHackathonDTO {
         return dates.getStartDate().isAfter(subscriptionDates.getEndDate()) ||
                 dates.getStartDate().isEqual(subscriptionDates.getEndDate());
     }
-
 }

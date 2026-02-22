@@ -33,4 +33,5 @@ public class Period {
         }
         return endDate.isAfter(startDate) || endDate.isEqual(startDate);
     }
+
 }

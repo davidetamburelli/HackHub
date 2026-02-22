@@ -11,8 +11,8 @@ import model.enums.PrizeStatus;
 
 import java.time.LocalDateTime;
 
-@Embeddable
 @Getter
+@Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PrizePayout {
 
@@ -35,4 +35,5 @@ public class PrizePayout {
         this.providerRef = providerRef;
         this.failureReason = failureReason;
     }
+
 }

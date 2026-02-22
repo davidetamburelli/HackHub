@@ -16,5 +16,4 @@ public class CreateTeamDTO {
     @NotBlank(message = "Il nome del team non può essere vuoto")
     @Size(min = 3, max = 50, message = "Il nome del team deve avere tra 3 e 50 caratteri")
     private String name;
-
 }

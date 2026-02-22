@@ -3,15 +3,21 @@ package model.dto.requestdto;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class CallBookingResult {
 
     private boolean success;
     private String eventId;
     private String meetingURL;
     private String failureReason;
+
+    public boolean isSuccess() {
+        return success;
+    }
 
     public static CallBookingResult ok(String eventId, String meetingURL) {
         return new CallBookingResult(true, eventId, meetingURL, null);

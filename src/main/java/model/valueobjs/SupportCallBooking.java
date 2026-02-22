@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@Embeddable
 @Getter
+@Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SupportCallBooking {
 
@@ -47,4 +47,5 @@ public class SupportCallBooking {
         this.meetingURL = meetingURL;
         this.createdAt = createdAt;
     }
+
 }
