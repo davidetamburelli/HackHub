@@ -64,9 +64,9 @@ public class HackHubApplication {
                                                  @RequestHeader(value="X-Actor-Id", required=false) Long id,
                                                  @RequestHeader(value="X-Actor-Type", required=false) String actorType) {
         if(actorType != null && actorType.equals("STAFF") || id != null) {
-            return new ResponseEntity<>("Visualizzando i dettagli dell'hackathon " + hackathonId, HttpStatus.OK);
+            return new ResponseEntity<>(hackathonHandler.getHackathonDetails(id, hackathonId), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Visualizzando le informazioni pubbliche dell'hackathon " + hackathonId, HttpStatus.OK);
+            return new ResponseEntity<>(hackathonHandler.getHackathonPublicInfos(hackathonId), HttpStatus.OK);
         }
     }
 
@@ -161,10 +161,10 @@ public class HackHubApplication {
 
     @PostMapping(value="/hackathon/{hackathonId}/payout")
     public ResponseEntity<Object> sendPrizeToWinner (@PathVariable long hackathonId,
-                                                     @RequestHeader(value="X-Actor-Id", required=true) Long id) {
+                                                  b   @RequestHeader(value="X-Actor-Id", required=true) Long id) {
         try {
-            PaymentResult result = hackathonHandler.sendPrizeToWinner(id, hackathonId);
-            return new ResponseEntity<>(result, HttpStatus.OK);
+            //PaymentResult result = hackathonHandler.sendPrizeToWinner(id, hackathonId);
+            return new ResponseEntity<>(hackathonHandler.sendPrizeToWinner(id, hackathonId), HttpStatus.OK);
         } catch (DomainException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }

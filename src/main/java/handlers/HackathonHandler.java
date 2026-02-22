@@ -1,8 +1,10 @@
 package handlers;
 
 import model.dto.requestdto.HackathonSearchCriteria;
+import model.dto.responsedto.HackathonFullDetailsDTO;
 import model.dto.responsedto.HackathonSummaryDTO;
 import model.dto.responsedto.PrizePayoutResponseDTO;
+import model.dto.responsedto.PublicHackathonViewDTO;
 import model.mappers.HackathonDTOMapper;
 import model.valueobjs.PrizePayout;
 import utils.builders.HackathonBuilder;
@@ -27,6 +29,8 @@ import repository.SubmissionRepository;
 import utils.DomainException;
 import utils.IPaymentService;
 import utils.WinnerService;
+import utils.decorator.*;
+import utils.exception.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -102,6 +106,32 @@ public class HackathonHandler {
         createdHackathon.setStatus(HackathonStatus.IN_REGISTRATION);
 
         hackathonRepository.save(createdHackathon);
+    }
+
+    @Transactional
+    public HackathonFullDetailsDTO getHackathonDetails(Long staffProfileId, Long hackathonId) {
+        boolean isStaff = hackathonRepository.existsStaff(hackathonId, staffProfileId);
+        if (!isStaff) {
+            throw new DomainException("Operazione non consentita: non fai parte dello staff di questo hackathon");
+        }
+        Hackathon hackathon = hackathonRepository.getById(hackathonId);
+
+        StaffProfile organizer = staffProfileRepository.getById(hackathon.getOrganizer());
+        StaffProfile judge = staffProfileRepository.getById(hackathon.getJudge());
+        List<Long> mentorIds = hackathon.getMentors(); // List<Long>
+        List<StaffProfile> mentors = (mentorIds == null || mentorIds.isEmpty())
+                ? List.of()
+                : staffProfileRepository.findAllById(mentorIds); // usa il findAllById che hai aggiunto
+
+        return HackathonDTOMapper.toFullDetails(hackathon, organizer, judge, mentors);
+    }
+
+    @Transactional
+    public PublicHackathonViewDTO getHackathonPublicInfos(Long hackathonId) {
+        Hackathon hackathon = hackathonRepository.getById(hackathonId);
+        StaffProfile organizer = staffProfileRepository.getById(hackathon.getOrganizer());
+        PublicHackathonView view = composeView(hackathon, organizer);
+        return view.toDto();
     }
 
     @Transactional
@@ -254,5 +284,35 @@ public class HackathonHandler {
         return hackathons.stream()
                 .map(HackathonDTOMapper::toSummary)
                 .toList();
+    }
+
+    private PublicHackathonView composeView(Hackathon h, StaffProfile organizer) {
+        PublicHackathonView view = new BasePublicHackathonView(h, organizer);
+
+        // IN_REGISTRATION: base + maxTeamSize, regulation, rankingPolicy
+        // READY_TO_START: uguale a in_registration
+        // RUNNING: uguale a in_registration
+        // IN_EVALUATION: in_registration + delivery
+        // CLOSED (+ winner != null): in_evaluation + winner
+        switch (h.getStatus()) {
+            case IN_REGISTRATION, READY_TO_START, RUNNING -> {
+                view = new RegistrationInfoDecorator(view, h);
+            }
+            case IN_EVALUATION -> {
+                view = new RegistrationInfoDecorator(view, h);
+                view = new EvaluationInfoDecorator(view, h);
+            }
+            case CLOSED -> {
+                view = new RegistrationInfoDecorator(view, h);
+                view = new EvaluationInfoDecorator(view, h);
+                if (h.getWinnerParticipatingTeamId() != null) {
+                    view = new WinnerInfoDecorator(view, h);
+                }
+            }
+            default -> {
+            }
+        }
+
+        return view;
     }
 }
