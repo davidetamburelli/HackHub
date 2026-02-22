@@ -1,11 +1,10 @@
 package model.mappers;
 
 import model.Hackathon;
+import model.ParticipatingTeam;
 import model.StaffProfile;
-import model.dto.responsedto.HackathonFullDetailsDTO;
-import model.dto.responsedto.HackathonSummaryDTO;
-import model.dto.responsedto.PrizePayoutDTO;
-import model.dto.responsedto.StaffSummaryDTO;
+import model.Team;
+import model.dto.responsedto.*;
 import model.valueobjs.PrizePayout;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public final class HackathonDTOMapper {
                 h.getId(),
                 h.getName(),
                 h.getType(),
-                h.getDates().getStartDate(),   // supponendo Period abbia getStart()
+                h.getDates().getStartDate(),
                 h.getDates().getEndDate(),
                 h.getStatus()
         );
@@ -48,12 +47,30 @@ public final class HackathonDTOMapper {
         );
     }
 
+    public static DeclareWinnerResponseDTO toDeclareWinnerResponse(Hackathon h, ParticipatingTeam pt) {
+        return new DeclareWinnerResponseDTO(
+                h.getId(),
+                h.getStatus(),
+                toWinner(pt)
+        );
+    }
+
+    public static PrizePayoutResponseDTO toPrizePayoutResponse(Hackathon h) {
+        return new PrizePayoutResponseDTO(
+                h.getId(),
+                h.getPrizePayout().getStatus(),
+                h.getPrizePayout().getPaidAt(),
+                h.getPrizePayout().getProviderRef(),
+                h.getPrizePayout().getFailureReason()
+        );
+    }
+
     private static StaffSummaryDTO toStaffSummary(StaffProfile staff) {
         if (staff == null) return null;
 
         return new StaffSummaryDTO(
                 staff.getId(),
-                staff.getEmail().toString(),
+                staff.getEmail(),
                 staff.getName(),
                 staff.getSurname()
         );
@@ -71,6 +88,14 @@ public final class HackathonDTOMapper {
     }
 
 
-
+    private static WinnerParticipatingTeamDTO toWinner(ParticipatingTeam pt) {
+        return new WinnerParticipatingTeamDTO(
+                pt.getId(),
+                pt.getTeam(),
+                pt.getContactEmail(),
+                pt.getRegisteredAt(),
+                pt.getTotalPenaltyPoints()
+        );
+    }
 
 }

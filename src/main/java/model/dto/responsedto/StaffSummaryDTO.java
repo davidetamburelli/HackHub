@@ -1,8 +1,10 @@
 package model.dto.responsedto;
 
+import model.valueobjs.Email;
+
 public record StaffSummaryDTO(
         Long id,
-        String email,
+        Email email,
         String name,
         String surname
 ) {

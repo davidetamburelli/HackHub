@@ -1,10 +1,7 @@
 package handlers;
 
 import model.dto.requestdto.HackathonSearchCriteria;
-import model.dto.responsedto.HackathonFullDetailsDTO;
-import model.dto.responsedto.HackathonSummaryDTO;
-import model.dto.responsedto.PrizePayoutResponseDTO;
-import model.dto.responsedto.PublicHackathonViewDTO;
+import model.dto.responsedto.*;
 import model.mappers.HackathonDTOMapper;
 import model.valueobjs.PrizePayout;
 import utils.builders.HackathonBuilder;
@@ -103,7 +100,7 @@ public class HackathonHandler {
                 .buildRankingPolicy(createHackathonDTO.getRankingPolicy())
                 .build();
 
-        createdHackathon.setStatus(HackathonStatus.IN_REGISTRATION);
+        //createdHackathon.setStatus(HackathonStatus.IN_REGISTRATION); prova
 
         hackathonRepository.save(createdHackathon);
     }
@@ -136,39 +133,27 @@ public class HackathonHandler {
 
     @Transactional
     public void confirmEvaluations(Long judgeId, Long hackathonId) {
+        boolean isJudge = hackathonRepository.existsJudge(hackathonId, judgeId);
+        if (!isJudge) {
+            throw new DomainException("Operazione non autorizzata: solo il giudice può confermare le valutazioni.");
+        }
+
+        HackathonStatus hackathonStatus = hackathonRepository.findStatusByHackathonId(hackathonId);
+        if (hackathonStatus != HackathonStatus.IN_EVALUATION) {
+            throw new DomainException("Impossibile confermare le valutazioni: l'hackathon non è attualmente in fase di valutazione.");
+        }
+
+        boolean evaluationMissing = submissionRepository.existsByHackathonIdAndEvaluationIsNull(hackathonId);
+        if (evaluationMissing) {
+            throw new DomainException("Impossibile confermare: ci sono ancora sottomissioni senza valutazione per questo hackathon.");
+        }
+
         Hackathon hackathon = hackathonRepository.getById(hackathonId);
         if (hackathon == null) {
             throw new DomainException("Hackathon non trovato.");
         }
 
-        if (!hackathon.getJudge().equals(judgeId)) {
-            throw new DomainException("Solo il giudice assegnato può confermare le valutazioni.");
-        }
-
-        List<RankingCandidate> candidates = submissionRepository.getRankingCandidates(hackathonId);
-        Long winnerParticipatingTeamId = winnerService.selectWinner(hackathon.getRankingPolicy(), candidates);
-
-        if (winnerParticipatingTeamId != null) {
-            hackathon.declareWinner(winnerParticipatingTeamId);
-            hackathon.close();
-
-            if (hackathon.getPrize() > 0) {
-                ParticipatingTeam winnerTeam = participatingTeamRepository.getById(winnerParticipatingTeamId);
-                PayoutAccountRef accountRef = winnerTeam.getPaymentAccountRef();
-                PaymentResult result = paymentService.transfer(hackathon.getPrize(), accountRef);
-
-                if (result.isSuccess()) {
-                    hackathon.confirmPrizePaid(result.getTransactionId(), LocalDateTime.now());
-                } else {
-                    hackathon.markPrizeFailed(result.getErrorMessage(), LocalDateTime.now());
-                }
-            } else {
-                hackathon.confirmPrizePaid("NO_PRIZE", LocalDateTime.now());
-            }
-        } else {
-            throw new DomainException("Impossibile determinare un vincitore (nessun candidato valido).");
-        }
-
+        hackathon.close();
         hackathonRepository.save(hackathon);
     }
 
@@ -212,20 +197,11 @@ public class HackathonHandler {
         }
 
         hackathonRepository.save(hackathon);
-        // costruisci DTO di risposta dallo stato aggiornato dell'hackathon
-        PrizePayout updated = hackathon.getPrizePayout();
-
-        return new PrizePayoutResponseDTO(
-                hackathon.getId(),
-                updated.getStatus(),
-                updated.getPaidAt(),
-                updated.getProviderRef(),
-                updated.getFailureReason()
-        );
+        return HackathonDTOMapper.toPrizePayoutResponse(hackathon);
     }
 
     @Transactional
-    public void declareWinner(Long staffProfileId, Long hackathonId) {
+    public DeclareWinnerResponseDTO declareWinner(Long staffProfileId, Long hackathonId) {
         boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non autorizzata");
@@ -270,6 +246,9 @@ public class HackathonHandler {
 
         h.declareWinner(winnerParticipatingTeamId);
         hackathonRepository.save(h);
+
+        ParticipatingTeam winnerTeam = participatingTeamRepository.getById(winnerParticipatingTeamId);
+        return HackathonDTOMapper.toDeclareWinnerResponse(h, winnerTeam);
     }
 
     public List<HackathonSummaryDTO> searchHackathon(HackathonSearchCriteria hackathonSearchCriteria) {

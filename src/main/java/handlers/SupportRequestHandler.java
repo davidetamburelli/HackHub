@@ -7,6 +7,7 @@ import model.dto.requestdto.BookSupportCallDTO;
 import model.dto.requestdto.CallBookingResult;
 import model.dto.requestdto.CreateSupportRequestDTO;
 import model.dto.requestdto.ReplySupportRequestDTO;
+import model.dto.responsedto.BookCallResponseDTO;
 import model.dto.responsedto.SupportRequestDetailsDTO;
 import model.dto.responsedto.SupportRequestSummaryDTO;
 import model.enums.HackathonStatus;
@@ -122,7 +123,7 @@ public class SupportRequestHandler {
     }
 
     @Transactional
-    public void bookSupportCall(Long staffProfileId, Long hackathonId, Long supportRequestId, BookSupportCallDTO bookSupportCallDTO) {
+    public BookCallResponseDTO bookSupportCall(Long staffProfileId, Long hackathonId, Long supportRequestId, BookSupportCallDTO bookSupportCallDTO) {
         boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
         if (!isMentor) {
             throw new DomainException("L'utente non è un mentore per questo hackathon");
@@ -173,5 +174,7 @@ public class SupportRequestHandler {
         );
 
         supportRequestRepository.save(supportRequest);
+
+        return SupportRequestDTOMapper.toBookCallResponse(supportRequest);
     }
 }

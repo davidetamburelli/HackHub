@@ -26,7 +26,7 @@ public class Submission {
     @Column(name = "response", nullable = false)
     private String response;
 
-    @Column(name = "response_url", nullable = false, length = 500)
+    @Column(name = "response_url", nullable = true, length = 500)
     private String responseURL;
 
     @Column(name = "updated_at", nullable = false)

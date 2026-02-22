@@ -2,6 +2,7 @@ package model.mappers;
 
 import model.ParticipatingTeam;
 import model.SupportRequest;
+import model.dto.responsedto.BookCallResponseDTO;
 import model.dto.responsedto.ParticipatingTeamRefDTO;
 import model.dto.responsedto.SupportRequestDetailsDTO;
 import model.dto.responsedto.SupportRequestSummaryDTO;
@@ -47,6 +48,17 @@ public final class SupportRequestDTOMapper {
                 team.getContactEmail(),
                 team.isDisqualified(),
                 team.getTotalPenaltyPoints()
+        );
+    }
+
+    public static BookCallResponseDTO toBookCallResponse(SupportRequest supportRequest) {
+        return new BookCallResponseDTO(
+                supportRequest.getHackathon(),
+                supportRequest.getId(),
+                supportRequest.getCallBooking().getEventId(),
+                supportRequest.getCallBooking().getMeetingURL(),
+                supportRequest.getCallBooking().getStartsAt(),
+                supportRequest.getStatus().name()
         );
     }
 }

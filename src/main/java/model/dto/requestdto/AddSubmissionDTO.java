@@ -16,7 +16,6 @@ public class AddSubmissionDTO {
     @NotBlank(message = "La descrizione del progetto è obbligatoria")
     private String response;
 
-    @NotBlank(message = "L'URL del repository/progetto è obbligatorio")
     @URL(message = "L'URL fornito non è in un formato valido (es. https://...)")
     private String responseURL;
 

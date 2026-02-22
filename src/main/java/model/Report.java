@@ -73,5 +73,6 @@ public class Report {
 
     public void archive() {
         this.resolved = true;
+        this.reportResolution = ReportResolution.NO_ACTION;
     }
 }

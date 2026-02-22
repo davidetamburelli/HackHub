@@ -69,7 +69,7 @@ public class ReportHandler {
     }
 
     public List<ReportSummaryDTO> getReports(Long staffProfileId, Long hackathonId) {
-        boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
         }
@@ -81,7 +81,7 @@ public class ReportHandler {
     }
 
     public ReportDetailsDTO getReportDetails(Long staffProfileId, Long hackathonId, Long reportId) {
-        boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
+        boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
         }

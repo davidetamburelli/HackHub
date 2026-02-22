@@ -50,8 +50,7 @@ public class HackHubApplication {
     }
 
     @PostMapping(value="/searchHackathon")
-    public ResponseEntity<Object> searchHackathon (@RequestHeader(value="X-Actor-Id", required=true) Long id,
-                                                   @RequestBody HackathonSearchCriteria criteria) {
+    public ResponseEntity<Object> searchHackathon (@RequestBody(required=false) HackathonSearchCriteria criteria) {
         try {
             return new ResponseEntity<>(hackathonHandler.searchHackathon(criteria), HttpStatus.OK);
         } catch (DomainException e) {
@@ -152,8 +151,8 @@ public class HackHubApplication {
     public ResponseEntity<Object> declareWinner (@PathVariable long hackathonId,
                                                  @RequestHeader(value="X-Actor-Id", required=true) Long id) {
         try {
-            hackathonHandler.declareWinner(id, hackathonId);
-            return new ResponseEntity<>("Vincitore proclamato con successo", HttpStatus.OK);
+
+            return new ResponseEntity<>("Vincitore proclamato con successo\n " +  hackathonHandler.declareWinner(id, hackathonId), HttpStatus.OK);
         } catch (DomainException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -161,9 +160,8 @@ public class HackHubApplication {
 
     @PostMapping(value="/hackathon/{hackathonId}/payout")
     public ResponseEntity<Object> sendPrizeToWinner (@PathVariable long hackathonId,
-                                                  b   @RequestHeader(value="X-Actor-Id", required=true) Long id) {
+                                                     @RequestHeader(value="X-Actor-Id", required=true) Long id) {
         try {
-            //PaymentResult result = hackathonHandler.sendPrizeToWinner(id, hackathonId);
             return new ResponseEntity<>(hackathonHandler.sendPrizeToWinner(id, hackathonId), HttpStatus.OK);
         } catch (DomainException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -339,11 +337,11 @@ public class HackHubApplication {
         }
     }
 
-    @PostMapping(value="/team/inviteUser")
+    @PostMapping(value="/user/{userId}/inviteToTeam")
     public ResponseEntity<Object> inviteUser (@RequestHeader(value="X-Actor-Id", required=true) Long id,
-                                              @RequestBody Long inviteeId) {
+                                              @PathVariable long userId) {
         try {
-            invitationHandler.inviteUser(id, inviteeId);
+            invitationHandler.inviteUser(id, userId);
             return new ResponseEntity<>("Utente invitato con successo", HttpStatus.OK);
         } catch (DomainException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

@@ -91,5 +91,6 @@ public class SupportRequest {
                 meetingURL,
                 LocalDateTime.now()
         );
+        this.status = SupportRequestStatus.CALL_SCHEDULED;
     }
 }
