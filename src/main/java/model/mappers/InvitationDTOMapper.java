@@ -19,19 +19,6 @@ public final class InvitationDTOMapper {
         );
     }
 
-    public static InvitationSummaryDTO toSummary(Invitation i, Team team) {
-        return new InvitationSummaryDTO(
-                i.getId(),
-                i.getTeamId(),
-                team != null ? team.getName() : null,
-                i.getStatus()
-        );
-    }
-
-    // =========================
-    // DETAILS
-    // =========================
-
     public static InvitationDetailsDTO toDetails(Invitation i, Team team) {
         return new InvitationDetailsDTO(
                 i.getId(),
@@ -39,10 +26,6 @@ public final class InvitationDTOMapper {
                 toTeamRefDTO(team)
         );
     }
-
-    // =========================
-    // MAPPER SECONDARIO
-    // =========================
 
     private static TeamRefDTO toTeamRefDTO(Team team) {
         if (team == null) return null;

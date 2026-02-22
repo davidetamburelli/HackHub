@@ -7,7 +7,10 @@ import model.dto.requestdto.BookSupportCallDTO;
 import model.dto.requestdto.CallBookingResult;
 import model.dto.requestdto.CreateSupportRequestDTO;
 import model.dto.requestdto.ReplySupportRequestDTO;
+import model.dto.responsedto.SupportRequestDetailsDTO;
+import model.dto.responsedto.SupportRequestSummaryDTO;
 import model.enums.HackathonStatus;
+import model.mappers.SupportRequestDTOMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repository.HackathonRepository;
@@ -62,16 +65,18 @@ public class SupportRequestHandler {
         supportRequestRepository.save(request);
     }
 
-    public List<SupportRequest> getSupportRequests(Long staffProfileId, Long hackathonId) {
+    public List<SupportRequestSummaryDTO> getSupportRequests(Long staffProfileId, Long hackathonId) {
         boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
         if (!isMentor) {
             throw new DomainException("Operazione non autorizzata: non sei un mentore dell'hackathon");
         }
-
-        return supportRequestRepository.getByHackathonId(hackathonId);
+        List<SupportRequest> supportRequests = supportRequestRepository.getByHackathonId(hackathonId);
+        return supportRequests.stream()
+                .map(SupportRequestDTOMapper::toSummary)
+                .toList();
     }
 
-    public SupportRequest getSupportRequestDetails(Long staffProfileId, Long hackathonId, Long supportRequestId) {
+    public SupportRequestDetailsDTO getSupportRequestDetails(Long staffProfileId, Long hackathonId, Long supportRequestId) {
         boolean isMentor = hackathonRepository.existsMentor(hackathonId, staffProfileId);
         if (!isMentor) {
             throw new DomainException("Operazione non autorizzata: non sei un mentore dell'hackathon");
@@ -82,7 +87,12 @@ public class SupportRequestHandler {
             throw new DomainException("La richiesta di supporto non appartiene all'hackathon selezionato");
         }
 
-        return supportRequest;
+        ParticipatingTeam partecipatingTeam = participatingTeamRepository.getById(supportRequest.getParticipatingTeam());
+        if (partecipatingTeam == null) {
+            throw new DomainException("Il partecipating team non esiste nel sistema");
+        }
+
+        return SupportRequestDTOMapper.toDetails(supportRequest, partecipatingTeam);
     }
 
     @Transactional

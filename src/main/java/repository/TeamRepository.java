@@ -6,6 +6,8 @@ import jakarta.persistence.TypedQuery;
 import model.Team;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+
 @Repository
 public class TeamRepository extends AbstractRepository<Team> {
 
@@ -52,4 +54,5 @@ public class TeamRepository extends AbstractRepository<Team> {
             return null;
         }
     }
+
 }

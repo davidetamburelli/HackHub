@@ -2,15 +2,20 @@ package handlers;
 
 import model.ParticipatingTeam;
 import model.Report;
+import model.StaffProfile;
 import model.dto.requestdto.ApplySanctionDTO;
 import model.dto.requestdto.CreateReportDTO;
+import model.dto.responsedto.ReportDetailsDTO;
+import model.dto.responsedto.ReportSummaryDTO;
 import model.enums.HackathonStatus;
 import model.enums.ReportResolution;
+import model.mappers.ReportDTOMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repository.HackathonRepository;
 import repository.ParticipatingTeamRepository;
 import repository.ReportRepository;
+import repository.StaffProfileRepository;
 import utils.DomainException;
 
 import java.time.LocalDateTime;
@@ -22,14 +27,16 @@ public class ReportHandler {
     private final HackathonRepository hackathonRepository;
     private final ParticipatingTeamRepository participatingTeamRepository;
     private final ReportRepository reportRepository;
+    private final StaffProfileRepository staffProfileRepository;
 
     public ReportHandler(
             HackathonRepository hackathonRepository,
             ParticipatingTeamRepository participatingTeamRepository,
-            ReportRepository reportRepository) {
+            ReportRepository reportRepository, StaffProfileRepository staffProfileRepository) {
         this.hackathonRepository = hackathonRepository;
         this.participatingTeamRepository = participatingTeamRepository;
         this.reportRepository = reportRepository;
+        this.staffProfileRepository = staffProfileRepository;
     }
 
     @Transactional
@@ -61,16 +68,19 @@ public class ReportHandler {
         reportRepository.save(createdReport);
     }
 
-    public List<Report> getReports(Long staffProfileId, Long hackathonId) {
+    public List<ReportSummaryDTO> getReports(Long staffProfileId, Long hackathonId) {
         boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
         }
 
-        return reportRepository.getByHackathonId(hackathonId);
+        List<Report> reports = reportRepository.getByHackathonId(hackathonId);
+        return reports.stream()
+                .map(ReportDTOMapper::toSummary)
+                .toList();
     }
 
-    public Report getReportDetails(Long staffProfileId, Long hackathonId, Long reportId) {
+    public ReportDetailsDTO getReportDetails(Long staffProfileId, Long hackathonId, Long reportId) {
         boolean isOrganizer = hackathonRepository.existsMentor(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non autorizzata: non sei l'organizzatore dell'hackathon");
@@ -81,7 +91,17 @@ public class ReportHandler {
             throw new DomainException("La segnalazione non appartiene all'hackathon selezionato");
         }
 
-        return report;
+        ParticipatingTeam participatingTeam = participatingTeamRepository.getById(report.getParticipatingTeam());
+        if (participatingTeam == null) {
+            throw new DomainException("Il participating team non esiste nel sistema");
+        }
+
+        StaffProfile mentor = staffProfileRepository.getById(report.getMentor());
+        if (mentor == null) {
+            throw new DomainException("Il mentore non esiste nel sistema");
+        }
+
+        return ReportDTOMapper.toDetails(report, participatingTeam, mentor);
     }
 
     @Transactional

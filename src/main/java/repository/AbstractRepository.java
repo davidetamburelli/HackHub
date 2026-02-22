@@ -2,6 +2,9 @@ package repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractRepository<T> implements IRepository<T> {
@@ -43,6 +46,22 @@ public abstract class AbstractRepository<T> implements IRepository<T> {
     public List<T> findAll() {
         String jpql = "SELECT e FROM " +  entityClass.getSimpleName() + " e";
         TypedQuery<T> query = em.createQuery(jpql, entityClass);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<T> findAllById(Collection<Long> ids) {
+
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String jpql = "SELECT e FROM " + entityClass.getSimpleName()
+                + " e WHERE e.id IN :ids";
+
+        TypedQuery<T> query = em.createQuery(jpql, entityClass);
+        query.setParameter("ids", ids);
+
         return query.getResultList();
     }
 

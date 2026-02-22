@@ -2,7 +2,9 @@ package handlers;
 
 import model.dto.requestdto.HackathonSearchCriteria;
 import model.dto.responsedto.HackathonSummaryDTO;
+import model.dto.responsedto.PrizePayoutResponseDTO;
 import model.mappers.HackathonDTOMapper;
+import model.valueobjs.PrizePayout;
 import utils.builders.HackathonBuilder;
 import utils.builders.IHackathonBuilder;
 import model.Hackathon;
@@ -141,7 +143,7 @@ public class HackathonHandler {
     }
 
     @Transactional
-    public PaymentResult sendPrizeToWinner(Long staffProfileId, Long hackathonId) {
+    public PrizePayoutResponseDTO sendPrizeToWinner(Long staffProfileId, Long hackathonId) {
         boolean isOrganizer = hackathonRepository.existsOrganizer(hackathonId, staffProfileId);
         if (!isOrganizer) {
             throw new DomainException("Operazione non consentita: non sei l'organizzatore di questo hackathon");
@@ -180,7 +182,16 @@ public class HackathonHandler {
         }
 
         hackathonRepository.save(hackathon);
-        return result;
+        // costruisci DTO di risposta dallo stato aggiornato dell'hackathon
+        PrizePayout updated = hackathon.getPrizePayout();
+
+        return new PrizePayoutResponseDTO(
+                hackathon.getId(),
+                updated.getStatus(),
+                updated.getPaidAt(),
+                updated.getProviderRef(),
+                updated.getFailureReason()
+        );
     }
 
     @Transactional

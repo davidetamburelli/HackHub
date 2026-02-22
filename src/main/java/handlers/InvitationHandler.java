@@ -3,7 +3,12 @@ package handlers;
 import model.Invitation;
 import model.Team;
 import model.User;
+import model.dto.responsedto.InvitationDetailsDTO;
+import model.dto.responsedto.InvitationSummaryDTO;
+import model.dto.responsedto.UserSummaryDTO;
 import model.enums.InvitationStatus;
+import model.mappers.InvitationDTOMapper;
+import model.mappers.UserDTOMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repository.InvitationRepository;
@@ -12,6 +17,9 @@ import repository.UserRepository;
 import utils.DomainException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class InvitationHandler {
@@ -29,16 +37,16 @@ public class InvitationHandler {
         this.invitationRepository = invitationRepository;
     }
 
-    public User searchUser(String username) {
+    public UserSummaryDTO searchUser(String username) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new DomainException("Utente non trovato");
         }
-        return user;
+        return UserDTOMapper.toSummary(user);
     }
 
     @Transactional
-    public Invitation inviteUser(Long inviterUserId, Long inviteeUserId) {
+    public void inviteUser(Long inviterUserId, Long inviteeUserId) {
         Team inviterTeam = teamRepository.findByLeaderId(inviterUserId);
         if (inviterTeam == null) {
             throw new DomainException("Operazione negata: non sei il leader di alcun team");
@@ -58,15 +66,45 @@ public class InvitationHandler {
 
         invitationRepository.save(createdInvitation);
 
-        return createdInvitation;
     }
 
-    public List<Invitation> getInvitationsList(Long userId) {
-        return invitationRepository.findByInviteeId(userId);
+    public List<InvitationSummaryDTO> getInvitationsList(Long userId) {
+        List<Invitation> invitations =
+                invitationRepository.findByInviteeId(userId);
+
+        Set<Long> teamIds = invitations.stream()
+                .map(Invitation::getTeamId)
+                .collect(Collectors.toSet());
+
+        List<Team> teams = teamRepository.findAllById(teamIds);
+
+        Map<Long, String> teamNames = teams.stream()
+                .collect(Collectors.toMap(
+                        Team::getId,
+                        Team::getName
+                ));
+
+        return invitations.stream()
+                .map(inv -> InvitationDTOMapper.toSummary(
+                        inv,
+                        teamNames.get(inv.getTeamId())
+                ))
+                .toList();
     }
 
-    public Invitation getInvitationDetails(Long userId, Long invitationId) {
-        return invitationRepository.getByIdAndInviteeId(invitationId, userId);
+    public InvitationDetailsDTO getInvitationDetails(Long userId, Long invitationId) {
+        Invitation invitation =
+                invitationRepository.getByIdAndInviteeId(invitationId, userId);
+
+        if (invitation == null) {
+            throw new DomainException(
+                    "Invito non trovato o non autorizzato"
+            );
+        }
+
+        Team team = teamRepository.getById(invitation.getTeamId());
+
+        return InvitationDTOMapper.toDetails(invitation, team);
     }
 
     @Transactional

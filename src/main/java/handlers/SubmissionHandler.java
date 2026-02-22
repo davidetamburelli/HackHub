@@ -4,7 +4,10 @@ import model.Hackathon;
 import model.ParticipatingTeam;
 import model.Submission;
 import model.dto.requestdto.AddSubmissionDTO;
+import model.dto.responsedto.SubmissionDetailsDTO;
+import model.dto.responsedto.SubmissionSummaryDTO;
 import model.enums.HackathonStatus;
+import model.mappers.SubmissionDTOMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repository.HackathonRepository;
@@ -66,16 +69,21 @@ public class SubmissionHandler {
         submissionRepository.save(createdSubmission);
     }
 
-    public List<Submission> getSubmissionsList(Long staffProfileId, Long hackathonId) {
+    public List<SubmissionSummaryDTO> getSubmissionsList(Long staffProfileId, Long hackathonId) {
         boolean isStaff = hackathonRepository.existsStaff(hackathonId, staffProfileId);
         if (!isStaff) {
             throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
         }
 
-        return submissionRepository.findByHackathonId(hackathonId);
+        List<Submission> submissions =
+                submissionRepository.findByHackathonId(hackathonId);
+
+        return submissions.stream()
+                .map(SubmissionDTOMapper::toSummary)
+                .toList();
     }
 
-    public Submission getSubmissionDetails(Long staffProfileId, Long hackathonId, Long submissionId) {
+    public SubmissionDetailsDTO getSubmissionDetails(Long staffProfileId, Long hackathonId, Long submissionId) {
         boolean isStaff = hackathonRepository.existsStaff(hackathonId, staffProfileId);
         if (!isStaff) {
             throw new DomainException("Operazione non autorizzata: non fai parte dello staff");
@@ -91,6 +99,6 @@ public class SubmissionHandler {
             throw new DomainException("La sottomissione non appartiene all'hackathon selezionato");
         }
 
-        return submission;
+        return SubmissionDTOMapper.toDetails(submission);
     }
 }
